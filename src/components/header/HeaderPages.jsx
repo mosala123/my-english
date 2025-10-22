@@ -37,22 +37,22 @@ const HeaderPages = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link onClick={closeMenu} className="text-gray-500 transition hover:text-gray-500/75" href="/">
+                  <Link onClick={closeMenu} className="text-gray-500 transition hover:text-gray-500/75" href="/Products">
                     Products
                   </Link>
                 </li>
                 <li>
-                  <Link onClick={closeMenu} className="text-gray-500 transition hover:text-gray-500/75" href="#">
+                  <Link onClick={closeMenu} className="text-gray-500 transition hover:text-gray-500/75" href="/top-sale">
                     Top Sale
                   </Link>
                 </li>
                 <li>
-                  <Link onClick={closeMenu} className="text-gray-500 transition hover:text-gray-500/75" href="#">
+                  <Link onClick={closeMenu} className="text-gray-500 transition hover:text-gray-500/75" href="/arrivals">
                     New Arrivals
                   </Link>
                 </li>
                 <li>
-                  <Link onClick={closeMenu} className="text-gray-500 transition hover:text-gray-500/75" href="#">
+                  <Link onClick={closeMenu} className="text-gray-500 transition hover:text-gray-500/75" href="/brands">
                     Brands
                   </Link>
                 </li>
@@ -80,7 +80,7 @@ const HeaderPages = () => {
 
                 <div className="cart-icon" style={{ position: 'relative' }}>
                   <div onClick={togglecart} href="/cart"> <IoCartOutline style={{ fontSize: "30px", cursor: "pointer" }} /> </div>
-                  <span className="cart-badge">h</span>
+                  <span className="cart-badge"></span>
                 </div>
 
                 <div className={`cart-header-shopping ${cartOpen ? "shopping-back" : ""}`}>

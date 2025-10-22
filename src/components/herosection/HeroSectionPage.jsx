@@ -20,7 +20,7 @@ const HeroSectionPage = () => {
               <div className="mt-8 flex items-center gap-4">
                 <Link
                   className="inline-block rounded-lg border border-[#000]  bg-[#000] px-6 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-[#fff] hover:text-[#000] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                  href="#"
+                  href="/arrivals"
                 >
                   Shop New
                 </Link>
