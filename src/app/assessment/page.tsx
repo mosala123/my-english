@@ -954,14 +954,15 @@ const AssessmentPage = () => {
                   </h2>
                 </div>
                 <div className="flex justify-center mb-6">
-                  <button
-                    onClick={()=>playAudio(currentQ.audio)}
-                    disabled={isPlayingAudio}
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold hover:from-blue-600 hover:to-purple-700 transition-all flex items-center gap-3 shadow-lg disabled:opacity-50"
-                  >
-                    <IoVolumeHigh className="w-6 h-6" />
-                    {isPlayingAudio ? 'Playing...' : 'Play Audio'}
-                  </button>
+                <button
+  onClick={() => currentQ.audio && playAudio(currentQ.audio)}
+  disabled={isPlayingAudio || !currentQ.audio}
+  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold hover:from-blue-600 hover:to-purple-700 transition-all flex items-center gap-3 shadow-lg disabled:opacity-50"
+>
+  <IoVolumeHigh className="w-6 h-6" />
+  {isPlayingAudio ? 'Playing...' : 'Play Audio'}
+</button>
+
                 </div>
               </div>
             </>
