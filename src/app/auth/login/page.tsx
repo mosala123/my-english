@@ -1,193 +1,423 @@
+﻿// app/auth/login/page.tsx
 'use client'
-import React, { useState } from 'react'
-import Link from 'next/link'
-import { IoEyeOff, IoEye, IoMail, IoLockClosed } from 'react-icons/io5'
 
-const LoginPage = () => {
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import {
+  IoMail,
+  IoLockClosed,
+  IoArrowForward,
+  IoEye,
+  IoEyeOff,
+  IoLogoGoogle,
+  IoLogoGithub,
+  IoLogoApple,
+  IoFingerPrint,
+  IoPeople,
+  IoBook,
+  IoTrophy,
+  IoStar,
+  IoTime,
+  IoRocket,
+  IoHappy,
+  IoShield,
+  IoKey
+} from 'react-icons/io5'
+
+// صور من Unsplash
+const backgroundImages = [
+  'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1920&q=80',
+  'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1920&q=80',
+  'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1920&q=80',
+  'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1920&q=80'
+]
+
+const testimonialImages = [
+  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&q=80',
+  'https://images.unsplash.com/photo-1494790108777-766d1c0a769d?w=200&q=80',
+  'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=200&q=80',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80'
+]
+
+export default function LoginPage() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
+  const [selectedBg, setSelectedBg] = useState(0)
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
+  const [errors, setErrors] = useState({
+    email: '',
+    password: ''
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
+  const [savedEmail, setSavedEmail] = useState('')
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
+  // تحميل البريد الإلكتروني المحفوظ
+  useEffect(() => {
+    const remembered = localStorage.getItem('rememberedUser')
+    if (remembered) {
+      setSavedEmail(remembered)
+      setFormData(prev => ({ ...prev, email: remembered }))
+    }
+  }, [])
+
+  // التحقق من صحة البريد الإلكتروني
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return re.test(email)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+    
+    if (errors[name as keyof typeof errors]) {
+      setErrors(prev => ({ ...prev, [name]: '' }))
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Login logic will go here
-    console.log('Login attempt:', formData)
+    
+    // التحقق من المدخلات
+    const newErrors = {
+      email: !formData.email ? 'البريد الإلكتروني مطلوب' : 
+             !validateEmail(formData.email) ? 'البريد الإلكتروني غير صحيح' : '',
+      password: !formData.password ? 'كلمة المرور مطلوبة' : ''
+    }
+
+    setErrors(newErrors)
+
+    if (Object.values(newErrors).some(error => error)) {
+      return
+    }
+
+    setIsLoading(true)
+
+    // تسجيل الدخول الفوري
+    const storedUser = localStorage.getItem('user')
+
+    if (storedUser) {
+      const userData = JSON.parse(storedUser)
+      if (userData.email === formData.email) {
+        if (rememberMe) {
+          localStorage.setItem('rememberedUser', formData.email)
+        } else {
+          localStorage.removeItem('rememberedUser')
+        }
+      } else {
+        const newUser = {
+          id: Date.now(),
+          name: 'مستخدم جديد',
+          email: formData.email,
+          joinDate: new Date().toISOString(),
+          level: 'A1',
+          goal: 'تحسين المحادثة',
+          bio: 'متعلم جديد في رحلة تعلم الإنجليزية 🌟',
+          location: 'القاهرة، مصر',
+          job: 'طالب',
+          website: 'https://englishmaster.com',
+          stats: {
+            totalExercises: 0,
+            totalHours: 0,
+            bestSkill: 'لم يتم تحديد بعد',
+            xp: 0
+          }
+        }
+        localStorage.setItem('user', JSON.stringify(newUser))
+        if (rememberMe) {
+          localStorage.setItem('rememberedUser', formData.email)
+        }
+      }
+    } else {
+      const newUser = {
+        id: Date.now(),
+        name: formData.email.split('@')[0],
+        email: formData.email,
+        joinDate: new Date().toISOString(),
+        level: 'A1',
+        goal: 'تحسين المحادثة',
+        bio: 'متعلم جديد في رحلة تعلم الإنجليزية 🌟',
+        location: 'القاهرة، مصر',
+        job: 'طالب',
+        website: 'https://englishmaster.com',
+        stats: {
+          totalExercises: 0,
+          totalHours: 0,
+          bestSkill: 'لم يتم تحديد بعد',
+          xp: 0
+        }
+      }
+      localStorage.setItem('user', JSON.stringify(newUser))
+      if (rememberMe) {
+        localStorage.setItem('rememberedUser', formData.email)
+      }
+    }
+
+    setIsLoading(false)
+    router.push('/profile')
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen w-full flex relative">
+      
+      {/* الجزء الأيسر - صور ومحتوى ترويجي (يظهر فقط على الديسكتوب) */}
+      <div className="hidden lg:block lg:w-1/2 min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-900 to-purple-900">
+        {/* صورة خلفية */}
+        <img 
+          src={backgroundImages[selectedBg]}
+          alt="Background"
+          className="absolute inset-0 w-full h-full object-cover opacity-30"
+        />
         
-        {/* Header */}
-        <div className="text-center">
-          <Link href="/" className="inline-flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">EM</span>
-            </div>
-            <span className="text-2xl font-bold text-gray-900">EnglishMaster</span>
-          </Link>
-          
-          <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
-          <p className="mt-2 text-gray-600">Sign in to continue your learning journey</p>
-        </div>
+        {/* طبقة تدرج */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/90 to-purple-900/90"></div>
 
-        {/* Login Form */}
-        <div className="bg-white rounded-2xl shadow-sm p-8">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            
-            {/* Email Field */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoMail className="h-5 w-5 text-gray-400" />
+        {/* المحتوى الترويجي */}
+        <div className="relative z-10 h-full flex flex-col items-center justify-center p-12 text-white">
+          
+          {/* شعار متحرك */}
+          <div className="mb-12 text-center">
+            <div className="inline-block p-1 bg-white/10 rounded-3xl backdrop-blur-sm mb-6">
+              <div className="px-6 py-2 bg-white/20 rounded-2xl">
+                <span className="text-sm font-bold tracking-wider">✨ أرحب من 10,000 متعلم</span>
+              </div>
+            </div>
+            <h2 className="text-4xl font-black mb-4">أهلاً بعودتك!</h2>
+            <p className="text-2xl font-bold text-indigo-200 mb-4">تابع رحلة تعلمك من حيث ما وقفت</p>
+            <div className="flex justify-center gap-2">
+              {[0, 1, 2, 3].map((idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedBg(idx)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    selectedBg === idx ? 'w-8 bg-white' : 'bg-white/50'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* آراء المستخدمين */}
+          <div className="max-w-lg mx-auto mb-12">
+            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 border border-white/20">
+              <div className="flex items-center gap-4 mb-4">
+                <img 
+                  src={testimonialImages[0]}
+                  alt="User"
+                  className="w-16 h-16 rounded-2xl border-2 border-white"
+                />
+                <div>
+                  <h3 className="font-bold text-lg">أحمد محمد</h3>
+                  <p className="text-white/70 text-sm">مهندس برمجيات</p>
                 </div>
+              </div>
+              <p className="text-white/90 text-sm leading-relaxed">
+                "بفضل المنصة دي، قدرت أحسن مستوايا في 3 شهور ونطقت قبول في منحة أوروبا. شكراً!"
+              </p>
+              <div className="flex gap-1 mt-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <IoStar key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* إحصائيات */}
+          <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
+            {[
+              { icon: IoPeople, value: '10k+', label: 'متعلم نشط' },
+              { icon: IoTime, value: '5M+', label: 'دقيقة تعلم' },
+              { icon: IoTrophy, value: '95%', label: 'تقييم إيجابي' }
+            ].map((item, idx) => {
+              const Icon = item.icon
+              return (
+                <div key={idx} className="text-center">
+                  <Icon className="w-6 h-6 mx-auto mb-2 text-indigo-300" />
+                  <div className="text-xl font-black">{item.value}</div>
+                  <div className="text-xs text-white/70">{item.label}</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* الجزء الأيمن - الفورم (عرض كامل على الموبايل، 50% على الديسكتوب) */}
+      <div className="w-full lg:w-1/2 min-h-screen flex items-center justify-center p-4 lg:p-8 bg-gradient-to-br from-gray-50 to-indigo-50 overflow-y-auto">
+        <div className="w-full max-w-lg">
+          
+          {/* اللوجو */}
+          <div className="text-center mb-8">
+            <Link href="/" className="inline-block">
+              <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl mx-auto mb-4 shadow-xl transform hover:-rotate-3 transition-transform">
+                <span className="text-3xl font-black text-white">E</span>
+              </div>
+            </Link>
+            <h1 className="text-3xl lg:text-4xl font-black text-gray-900 mb-2">أهلاً بعودتك! 👋</h1>
+            <p className="text-gray-600">سجل دخولك واستكمل رحلة تعلمك</p>
+          </div>
+
+          {/* خيارات الدخول السريع */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {[
+              { icon: IoLogoGoogle, color: 'text-red-500', bg: 'bg-red-50', label: 'Google' },
+              { icon: IoLogoGithub, color: 'text-gray-900', bg: 'bg-gray-100', label: 'GitHub' },
+              { icon: IoLogoApple, color: 'text-gray-900', bg: 'bg-gray-100', label: 'Apple' }
+            ].map((item, i) => (
+              <button
+                key={i}
+                className="flex items-center justify-center gap-2 py-3 px-2 bg-white border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-lg transition-all group"
+              >
+                <item.icon className={`w-5 h-5 ${item.color} group-hover:scale-110 transition-transform`} />
+                <span className="text-sm font-medium text-gray-700 hidden sm:inline">{item.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* فاصل */}
+          <div className="relative flex items-center gap-3 mb-6">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+            <span className="text-sm text-gray-500">أو بالبريد الإلكتروني</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+          </div>
+
+          {/* الفورم */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* البريد الإلكتروني مع اقتراح المحفوظ */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2 mr-1">
+                البريد الإلكتروني
+              </label>
+              <div className="relative group">
+                <IoMail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                 <input
-                  id="email"
-                  name="email"
                   type="email"
-                  required
+                  name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Enter your email"
+                  className={`w-full pr-10 pl-4 py-3 bg-white border ${errors.email ? 'border-red-300' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-left`}
+                  placeholder="ahmed@example.com"
+                  dir="ltr"
                 />
               </div>
+
+              {savedEmail && !formData.email && (
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, email: savedEmail }))}
+                  className="mt-2 inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700"
+                >
+                  <IoFingerPrint className="w-3.5 h-3.5" />
+                  استخدام البريد المحفوظ: {savedEmail}
+                </button>
+              )}
+
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1 mr-1">{errors.email}</p>
+              )}
             </div>
 
-            {/* Password Field */}
+            {/* كلمة المرور */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoLockClosed className="h-5 w-5 text-gray-400" />
-                </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2 mr-1">
+                كلمة المرور
+              </label>
+              <div className="relative group">
+                <IoLockClosed className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                 <input
-                  id="password"
-                  name="password"
                   type={showPassword ? 'text' : 'password'}
-                  required
+                  name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Enter your password"
+                  className={`w-full pr-10 pl-10 py-3 bg-white border ${errors.password ? 'border-red-300' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-left`}
+                  placeholder="••••••••"
+                  dir="ltr"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? (
-                    <IoEyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <IoEye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  )}
+                  {showPassword ? <IoEyeOff className="w-5 h-5" /> : <IoEye className="w-5 h-5" />}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-red-500 text-xs mt-1 mr-1">{errors.password}</p>
+              )}
             </div>
 
-            {/* Remember Me & Submit */}
+            {/* تذكرني + نسيت كلمة المرور */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
+              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
                 <input
-                  id="remember-me"
-                  name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                  Remember me
-                </label>
-              </div>
+                تذكرني
+              </label>
+              <Link href="/auth/forgot-password" className="text-sm text-indigo-600 hover:underline">
+                نسيت كلمة المرور؟
+              </Link>
             </div>
 
+            {/* زر الدخول */}
             <button
               type="submit"
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3.5 rounded-xl font-bold text-lg hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign in
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  جاري تسجيل الدخول...
+                </>
+              ) : (
+                <>
+                  <span>تسجيل الدخول</span>
+                  <IoArrowForward className="w-5 h-5" />
+                </>
+              )}
             </button>
           </form>
 
-          {/* Social Login */}
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                <span className="ml-2">Google</span>
-              </button>
-
-              <button
-                type="button"
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
-                </svg>
-                <span className="ml-2">Twitter</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Sign Up Link */}
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link href="/auth/signup" className="font-medium text-blue-600 hover:text-blue-500">
-                Sign up now
+          {/* رابط إنشاء حساب */}
+          <div className="text-center mt-6">
+            <p className="text-gray-600">
+              ليس لديك حساب؟{' '}
+              <Link href="/auth/signup" className="text-indigo-600 font-semibold hover:text-indigo-700 hover:underline">
+                أنشئ حسابك من هنا
               </Link>
             </p>
           </div>
-        </div>
 
-        {/* Demo Accounts */}
-        <div className="text-center">
-          <details className="inline-block text-sm text-gray-600">
-            <summary className="cursor-pointer hover:text-gray-700">Demo Accounts</summary>
-            <div className="mt-2 p-3 bg-white rounded-lg shadow-sm">
-              <p className="font-medium">Email: demo@englishmaster.com</p>
-              <p className="font-medium">Password: demo123</p>
-            </div>
-          </details>
+          {/* مميزات سريعة */}
+          <div className="mt-8 grid grid-cols-3 gap-3 text-center">
+            {[
+              { icon: IoShield, value: 'آمن', label: 'حماية كاملة' },
+              { icon: IoBook, value: '200+', label: 'درس' },
+              { icon: IoRocket, value: 'سريع', label: 'تقدم فوري' }
+            ].map((item, i) => (
+              <div key={i} className="p-3 bg-white rounded-xl shadow-sm">
+                <item.icon className="w-5 h-5 text-indigo-500 mx-auto mb-1" />
+                <div className="text-sm font-black text-gray-900">{item.value}</div>
+                <div className="text-xs text-gray-500">{item.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
+            <IoKey className="w-4 h-4" />
+            <span>بياناتك مشفرة وآمنة دائمًا</span>
+          </div>
         </div>
       </div>
     </div>
   )
 }
-
-export default LoginPage

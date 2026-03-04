@@ -1,357 +1,315 @@
-'use client'
-import React, { useState } from 'react'
-import Link from 'next/link'
-import { IoPlay, IoTime, IoStatsChart, IoBook, IoMic, IoHeadset, IoCheckmarkCircle, IoArrowForward } from 'react-icons/io5'
+﻿import Link from 'next/link'
+import { IoFlame, IoTime, IoArrowBack, IoBookOutline, IoMic, IoStatsChart, IoTrophy, IoSparkles, IoPlay, IoCheckmarkCircle } from 'react-icons/io5'
 
-const PracticePage = () => {
-  const [activeCategory, setActiveCategory] = useState('all')
+// ─── Data ─────────────────────────────────────────────────
+const tracks = [
+  {
+    id: 'speaking',
+    title: 'اختبار المحادثة',
+    subtitle: 'Speaking',
+    description: 'سجّل إجابتك واحصل على تقييم للنطق والطلاقة وبناء الجمل.',
+    href: '/speaking',
+    image: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=500&q=80',
+    icon: IoMic,
+    emoji: '🎙️',
+    color: { bg: '#ede9fe', text: '#6d28d9', border: '#ddd6fe', glow: 'rgba(139,92,246,0.2)' },
+    tag: 'الأصعب',
+    xp: 70,
+  },
+  {
+    id: 'vocabulary',
+    title: 'اختبار المفردات',
+    subtitle: 'Vocabulary',
+    description: 'سؤال سياقي واختيار المعنى الصحيح للكلمة في جملة حقيقية.',
+    href: '/vocabulary',
+    image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500&q=80',
+    icon: IoBookOutline,
+    emoji: '📖',
+    color: { bg: '#dbeafe', text: '#1d4ed8', border: '#bfdbfe', glow: 'rgba(37,99,235,0.2)' },
+    tag: 'الأكثر شعبية',
+    xp: 50,
+  },
+  {
+    id: 'grammar',
+    title: 'اختبار القواعد',
+    subtitle: 'Grammar',
+    description: 'تطبيق القاعدة داخل جملة حقيقية مع تصحيح وشرح فوري.',
+    href: '/grammar',
+    image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=500&q=80',
+    icon: IoStatsChart,
+    emoji: '📝',
+    color: { bg: '#dcfce7', text: '#15803d', border: '#bbf7d0', glow: 'rgba(16,185,129,0.2)' },
+    tag: null,
+    xp: 60,
+  },
+]
 
-  // فئات التمارين
-  const categories = [
-    { id: 'all', name: 'All Practice', icon: IoPlay },
-    { id: 'speaking', name: 'Speaking', icon: IoMic },
-    { id: 'listening', name: 'Listening', icon: IoHeadset },
-    { id: 'vocabulary', name: 'Vocabulary', icon: IoBook },
-    { id: 'grammar', name: 'Grammar', icon: IoStatsChart }
-  ]
+const quickExercises = [
+  {
+    id: 1,
+    title: 'اختبار سريع — الأزمنة',
+    subtitle: 'Simple Tenses',
+    duration: '5 دقائق',
+    questions: 5,
+    level: 'A2',
+    image: 'https://images.unsplash.com/photo-1506784365847-bbad939e9335?w=400&q=80',
+    xp: 30,
+  },
+  {
+    id: 2,
+    title: 'اختبار سريع — المفردات اليومية',
+    subtitle: 'Daily Vocabulary',
+    duration: '7 دقائق',
+    questions: 7,
+    level: 'B1',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80',
+    xp: 40,
+  },
+  {
+    id: 3,
+    title: 'اختبار سريع — الجمل المركبة',
+    subtitle: 'Complex Sentences',
+    duration: '10 دقائق',
+    questions: 10,
+    level: 'B2',
+    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&q=80',
+    xp: 55,
+  },
+]
 
-  // التمارين
-  const practiceExercises = [
-    {
-      id: 1,
-      title: 'Daily Conversation Practice',
-      description: 'Practice real-life conversations with AI feedback on pronunciation and fluency',
-      category: 'speaking',
-      duration: '10-15 min',
-      difficulty: 'Beginner',
-      completed: true,
-      xp: 25,
-      participants: '2.4K'
-    },
-    {
-      id: 2,
-      title: 'Vocabulary Builder Challenge',
-      description: 'Learn and practice 20 new words with interactive flashcards and quizzes',
-      category: 'vocabulary',
-      duration: '8-12 min',
-      difficulty: 'All Levels',
-      completed: true,
-      xp: 20,
-      participants: '3.1K'
-    },
-    {
-      id: 3,
-      title: 'Grammar in Context',
-      description: 'Apply grammar rules in real sentences with instant correction',
-      category: 'grammar',
-      duration: '15-20 min',
-      difficulty: 'Intermediate',
-      completed: false,
-      xp: 30,
-      participants: '1.8K'
-    },
-    {
-      id: 4,
-      title: 'Listening Comprehension',
-      description: 'Improve your listening skills with authentic conversations and comprehension questions',
-      category: 'listening',
-      duration: '12-18 min',
-      difficulty: 'Intermediate',
-      completed: false,
-      xp: 28,
-      participants: '2.2K'
-    },
-    {
-      id: 5,
-      title: 'Pronunciation Workshop',
-      description: 'Master difficult English sounds with voice recognition and feedback',
-      category: 'speaking',
-      duration: '10 min',
-      difficulty: 'All Levels',
-      completed: false,
-      xp: 22,
-      participants: '1.5K'
-    },
-    {
-      id: 6,
-      title: 'Business English Scenarios',
-      description: 'Role-play common business situations like meetings and presentations',
-      category: 'speaking',
-      duration: '20-25 min',
-      difficulty: 'Advanced',
-      completed: false,
-      xp: 35,
-      participants: '890'
-    },
-    {
-      id: 7,
-      title: 'Phrasal Verbs Mastery',
-      description: 'Learn and practice the most common phrasal verbs in context',
-      category: 'vocabulary',
-      duration: '15 min',
-      difficulty: 'Intermediate',
-      completed: false,
-      xp: 25,
-      participants: '2.7K'
-    },
-    {
-      id: 8,
-      title: 'Accent Training',
-      description: 'Reduce your accent and sound more like a native speaker',
-      category: 'speaking',
-      duration: '18-22 min',
-      difficulty: 'Advanced',
-      completed: false,
-      xp: 32,
-      participants: '1.2K'
-    }
-  ]
+const dailyStats = [
+  { value: '3',    label: 'تمارين اليوم',    icon: IoFlame,   color: '#fbbf24' },
+  { value: '15',   label: 'دقيقة متوسط',      icon: IoTime,    color: '#38bdf8' },
+  { value: '120',  label: 'XP متاحة اليوم',  icon: IoTrophy,  color: '#6ee7b7' },
+]
 
-  // التمارين الموصى بيها
-  const recommendedExercises = [
-    {
-      id: 101,
-      title: 'Quick Pronunciation Check',
-      description: '2-minute voice assessment',
-      category: 'speaking',
-      xp: 10
-    },
-    {
-      id: 102,
-      title: 'Vocabulary Sprint',
-      description: '5 new words in 5 minutes',
-      category: 'vocabulary',
-      xp: 15
-    },
-    {
-      id: 103,
-      title: 'Grammar Quick Fix',
-      description: 'Common mistakes review',
-      category: 'grammar',
-      xp: 12
-    }
-  ]
+function getLevelStyle(level: string) {
+  if (level.startsWith('A')) return { bg: '#dcfce7', color: '#15803d', border: '#bbf7d0' }
+  if (level.startsWith('B')) return { bg: '#dbeafe', color: '#1d4ed8', border: '#bfdbfe' }
+  return { bg: '#ede9fe', color: '#6d28d9', border: '#ddd6fe' }
+}
 
-  const filteredExercises = practiceExercises.filter(exercise => 
-    activeCategory === 'all' || exercise.category === activeCategory
-  )
-
-  const getDifficultyColor = (difficulty: string) => {
-    const colors = {
-      'Beginner': 'bg-green-100 text-green-800',
-      'All Levels': 'bg-blue-100 text-blue-800',
-      'Intermediate': 'bg-yellow-100 text-yellow-800',
-      'Advanced': 'bg-purple-100 text-purple-800'
-    }
-    return colors[difficulty as keyof typeof colors] || 'bg-gray-100 text-gray-800'
-  }
-
-  const getCategoryColor = (category: string) => {
-    const colors = {
-      'speaking': 'bg-red-50 border-red-200',
-      'listening': 'bg-blue-50 border-blue-200',
-      'vocabulary': 'bg-green-50 border-green-200',
-      'grammar': 'bg-purple-50 border-purple-200'
-    }
-    return colors[category as keyof typeof colors] || 'bg-gray-50 border-gray-200'
-  }
-
+// ─── Page ─────────────────────────────────────────────────
+export default function PracticePage() {
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 pb-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Practice Center</h1>
-          <p className="text-gray-600">Sharpen your English skills with interactive exercises and real-time feedback</p>
-        </div>
+    <div
+      className="min-h-screen py-10"
+      style={{ background: 'linear-gradient(160deg,#f8faff 0%,#eef4ff 40%,#f0faf8 100%)', fontFamily: "'Tajawal',sans-serif" }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');
+        .track-card { transition: all 0.25s cubic-bezier(0.4,0,0.2,1); border: 1.5px solid #e2e8f0; }
+        .track-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(37,99,235,0.12) !important; border-color: #93c5fd !important; }
+        .track-card:hover .track-img { transform: scale(1.06); }
+        .track-img { transition: transform 0.4s ease; }
+        .exercise-row { transition: all 0.2s ease; border: 1.5px solid #e2e8f0; }
+        .exercise-row:hover { border-color: #93c5fd; background: #f0f9ff; transform: translateX(-3px); }
+      `}</style>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            
-            {/* Quick Stats */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Your Practice Stats</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Exercises Completed</span>
-                  <span className="font-bold text-gray-900">12/45</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-600 h-2 rounded-full" style={{ width: '26%' }}></div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Total XP Earned</span>
-                  <span className="font-bold text-gray-900">285</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Current Streak</span>
-                  <span className="font-bold text-gray-900">7 days</span>
-                </div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+
+        {/* ─── Hero ─── */}
+        <section
+          className="rounded-3xl p-8 lg:p-10 text-right relative overflow-hidden"
+          style={{ background: 'linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%)', boxShadow: '0 24px 60px rgba(15,23,42,0.2)' }}
+        >
+          <div style={{ position:'absolute', top:-80, right:-80, width:300, height:300, background:'rgba(251,191,36,0.1)', borderRadius:'50%', filter:'blur(60px)', pointerEvents:'none' }} />
+          <div style={{ position:'absolute', bottom:-40, left:-40, width:200, height:200, background:'rgba(14,165,233,0.12)', borderRadius:'50%', filter:'blur(50px)', pointerEvents:'none' }} />
+
+          <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+            <div>
+              <div
+                className="inline-flex items-center gap-2 text-sm font-bold px-3 py-1.5 rounded-full mb-4"
+                style={{ background:'rgba(251,191,36,0.15)', border:'1px solid rgba(251,191,36,0.3)', color:'#fcd34d' }}
+              >
+                <IoFlame className="w-4 h-4 text-amber-400" />
+                مركز التدريب اليومي
               </div>
-            </div>
 
-            {/* Recommended Exercises */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Quick Practice</h3>
-              <div className="space-y-3">
-                {recommendedExercises.map((exercise) => (
-                  <Link
-                    key={exercise.id}
-                    href={`/practice/exercise/${exercise.id}`}
-                    className="block p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-gray-900 group-hover:text-blue-600">
-                          {exercise.title}
-                        </div>
-                        <div className="text-sm text-gray-600">{exercise.description}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-semibold text-blue-600">+{exercise.xp} XP</div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Practice Tips */}
-            <div className="bg-blue-50 rounded-xl p-6">
-              <h3 className="font-semibold text-blue-900 mb-3">💡 Practice Tips</h3>
-              <ul className="space-y-2 text-sm text-blue-800">
-                <li>• Practice daily, even for 10 minutes</li>
-                <li>• Focus on your weak areas</li>
-                <li>• Use the feedback to improve</li>
-                <li>• Don't be afraid to make mistakes</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            
-            {/* Category Filters */}
-            <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-              <div className="flex flex-wrap gap-3">
-                {categories.map((category) => {
-                  const Icon = category.icon
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => setActiveCategory(category.id)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                        activeCategory === category.id
-                          ? 'bg-blue-600 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {category.name}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Exercises Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredExercises.map((exercise) => (
-                <div 
-                  key={exercise.id}
-                  className={`bg-white rounded-xl shadow-sm border-2 hover:shadow-md transition-all hover:scale-105 ${getCategoryColor(exercise.category)}`}
+              <h1
+                className="font-extrabold text-white mb-3 leading-tight"
+                style={{ fontSize:'clamp(1.8rem,4vw,2.6rem)' }}
+              >
+                جرعة تدريب يومية مركزة
+                <span
+                  className="block mt-1"
+                  style={{ background:'linear-gradient(135deg,#fbbf24,#f97316)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}
                 >
-                  <div className="p-6">
-                    
-                    {/* Exercise Header */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          {exercise.completed && (
-                            <IoCheckmarkCircle className="w-5 h-5 text-green-500" />
-                          )}
-                          <h3 className="font-bold text-gray-900 text-lg">{exercise.title}</h3>
-                        </div>
-                        <p className="text-gray-600 text-sm mb-3">{exercise.description}</p>
-                      </div>
-                    </div>
+                  حل، راجع، أعد المحاولة
+                </span>
+              </h1>
 
-                    {/* Exercise Details */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span className="flex items-center gap-1">
-                          <IoTime className="w-4 h-4" />
-                          {exercise.duration}
-                        </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(exercise.difficulty)}`}>
-                          {exercise.difficulty}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-blue-600">+{exercise.xp} XP</div>
-                        <div className="text-xs text-gray-500">{exercise.participants} learners</div>
-                      </div>
-                    </div>
+              <p className="text-slate-400 leading-7" style={{ maxWidth:440 }}>
+                نظام التمرين مبني على <strong className="text-slate-200">التكرار الذكي</strong> — كل غلطة بتتحول لفرصة تعلم حقيقية.
+              </p>
 
-                    {/* Action Button */}
-                    <Link
-                      href={`/practice/exercise/${exercise.id}`}
-                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center gap-2"
-                    >
-                      {exercise.completed ? 'Practice Again' : 'Start Exercise'}
-                      <IoArrowForward className="w-4 h-4" />
-                    </Link>
-                  </div>
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                <Link
+                  href="/assessment"
+                  className="inline-flex items-center justify-center gap-2 text-white px-6 py-3 rounded-2xl font-bold text-sm"
+                  style={{ background:'linear-gradient(135deg,#f59e0b,#f97316)', boxShadow:'0 8px 24px rgba(251,191,36,0.3)' }}
+                >
+                  <IoPlay className="w-4 h-4" /> اختبر مستواك أولاً
+                </Link>
+                <Link
+                  href="/practice/exercise/1"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm"
+                  style={{ background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', color:'#cbd5e1' }}
+                >
+                  ابدأ تمرين سريع <IoArrowBack className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Daily Stats */}
+            <div className="flex gap-3 lg:flex-col">
+              {dailyStats.map(s => (
+                <div key={s.label} className="text-center px-4 py-4 rounded-2xl flex-1 lg:flex-none" style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.1)' }}>
+                  <s.icon className="w-5 h-5 mx-auto mb-1" style={{ color: s.color }} />
+                  <div className="font-extrabold text-xl text-white mb-0.5">{s.value}</div>
+                  <div className="text-slate-400 text-xs">{s.label}</div>
                 </div>
               ))}
             </div>
+          </div>
+        </section>
 
-            {/* Empty State */}
-            {filteredExercises.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-xl shadow-sm">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <IoStatsChart className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No exercises found</h3>
-                <p className="text-gray-600 mb-4">Try selecting a different category</p>
-                <button
-                  onClick={() => setActiveCategory('all')}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+        {/* ─── Tracks ─── */}
+        <section>
+          <div className="text-right mb-6">
+            <p className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-1">اختر مهارتك</p>
+            <h2 className="text-xl font-extrabold text-slate-900">مسارات التدريب</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {tracks.map(track => {
+              const Icon = track.icon
+              return (
+                <Link
+                  key={track.id}
+                  href={track.href}
+                  className="track-card bg-white rounded-2xl overflow-hidden flex flex-col"
+                  style={{ boxShadow:'0 2px 8px rgba(15,23,42,0.05)' }}
                 >
-                  Show all exercises
-                </button>
-              </div>
-            )}
+                  {/* Image */}
+                  <div className="overflow-hidden relative" style={{ height:130 }}>
+                    <img src={track.image} alt={track.title} className="track-img w-full h-full object-cover" />
+                    <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 30%, rgba(15,23,42,0.65))' }} />
 
-            {/* Practice Challenge */}
-            <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-xl p-6 mt-8 text-white">
-              <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-                <div>
-                  <h3 className="text-xl font-bold mb-2">7-Day Practice Challenge</h3>
-                  <p className="text-purple-100">Complete one exercise daily for 7 days and earn bonus rewards!</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">3/7</div>
-                    <div className="text-purple-200 text-sm">Days Completed</div>
+                    {track.tag && (
+                      <div className="absolute top-3 right-3">
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: track.color.bg, color: track.color.text, border:`1px solid ${track.color.border}` }}>
+                          {track.tag}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="absolute bottom-3 right-4 left-4 flex items-end justify-between">
+                      <span className="text-white/60 text-xs font-bold flex items-center gap-1">
+                        <IoFlame className="w-3 h-3 text-amber-400" />{track.xp} XP
+                      </span>
+                      <span className="text-2xl">{track.emoji}</span>
+                    </div>
                   </div>
-                  <Link
-                    href="/practice/challenge"
-                    className="bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-purple-50 transition-colors"
-                  >
-                    Join Challenge
-                  </Link>
+
+                  {/* Content */}
+                  <div className="p-5 flex flex-col gap-3 flex-1 text-right">
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 mb-0.5">{track.subtitle}</p>
+                      <h3 className="font-extrabold text-slate-900 text-base mb-1">{track.title}</h3>
+                      <p className="text-xs text-slate-500 leading-5">{track.description}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-sm font-bold mt-auto" style={{ color: track.color.text }}>
+                      ابدأ الاختبار <IoArrowBack className="w-4 h-4" />
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* ─── Quick Exercises ─── */}
+        <section>
+          <div className="text-right mb-5">
+            <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-1">تمارين سريعة</p>
+            <h2 className="text-xl font-extrabold text-slate-900">اختبارات قصيرة — ابدأ فوراً</h2>
+          </div>
+
+          <div className="space-y-3">
+            {quickExercises.map(ex => {
+              const ls = getLevelStyle(ex.level)
+              return (
+                <Link
+                  key={ex.id}
+                  href={`/practice/exercise/${ex.id}`}
+                  className="exercise-row bg-white rounded-2xl px-5 py-4 flex items-center gap-4"
+                >
+                  {/* Thumbnail */}
+                  <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
+                    <img src={ex.image} alt={ex.title} className="w-full h-full object-cover" />
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 text-right min-w-0">
+                    <p className="text-xs text-slate-400 font-medium mb-0.5">{ex.subtitle}</p>
+                    <h3 className="font-extrabold text-slate-900 text-sm">{ex.title}</h3>
+                    <div className="flex items-center gap-3 mt-1 justify-end">
+                      <span className="text-xs text-slate-400 flex items-center gap-1"><IoTime className="w-3.5 h-3.5" />{ex.duration}</span>
+                      <span className="text-xs text-slate-400">{ex.questions} سؤال</span>
+                    </div>
+                  </div>
+
+                  {/* Right side */}
+                  <div className="flex flex-col items-center gap-2 flex-shrink-0">
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full border" style={{ background: ls.bg, color: ls.color, borderColor: ls.border }}>
+                      {ex.level}
+                    </span>
+                    <span className="text-xs font-bold text-amber-500 flex items-center gap-0.5">
+                      <IoFlame className="w-3 h-3" />{ex.xp} XP
+                    </span>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* ─── Tip Banner ─── */}
+        <section className="pb-4">
+          <div
+            className="rounded-3xl p-7 relative overflow-hidden"
+            style={{ background:'linear-gradient(135deg,#0f172a,#1e3a5f)', boxShadow:'0 20px 50px rgba(15,23,42,0.18)' }}
+          >
+            <div style={{ position:'absolute', top:-40, left:-40, width:180, height:180, background:'rgba(251,191,36,0.15)', borderRadius:'50%', filter:'blur(40px)', pointerEvents:'none' }} />
+            <div className="relative flex flex-col sm:flex-row items-center justify-between gap-5 text-right">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <IoSparkles className="w-4 h-4 text-amber-400" />
+                  <span className="text-amber-300 text-sm font-bold">كيف يشتغل التكرار الذكي؟</span>
+                </div>
+                <p className="text-white font-bold">الأسئلة اللي غلطت فيها بتتكرر تلقائياً بعد فترة قصيرة.</p>
+                <div className="flex gap-4 mt-3">
+                  {['حل التمرين', 'راجع غلطاتك', 'أعد المحاولة'].map((step, i) => (
+                    <div key={step} className="flex items-center gap-1.5 text-xs text-slate-400">
+                      <IoCheckmarkCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      {step}
+                    </div>
+                  ))}
                 </div>
               </div>
+              <Link
+                href="/assessment"
+                className="flex-shrink-0 inline-flex items-center gap-2 text-white px-6 py-3 rounded-2xl font-bold text-sm"
+                style={{ background:'linear-gradient(135deg,#f59e0b,#f97316)', boxShadow:'0 8px 20px rgba(251,191,36,0.3)' }}
+              >
+                <IoFlame className="w-4 h-4" /> اختبر مستواك
+              </Link>
             </div>
           </div>
-        </div>
+        </section>
+
       </div>
     </div>
   )
 }
-
-export default PracticePage

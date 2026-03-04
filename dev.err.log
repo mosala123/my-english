@@ -1,0 +1,22 @@
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\E:\nextjs projects\my-english-app-doneâ\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\E:\nextjs projects\my-english-app-doneâ\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: EPERM: operation not permitted, open 'E:\nextjs projects\my-english-app-done✅\.next\dev\trace'
+Emitted 'error' event on WriteStream instance at:
+    at emitErrorNT (node:internal/streams/destroy:169:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:128:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'open',
+  path: 'E:\\nextjs projects\\my-english-app-done✅\\.next\\dev\\trace'
+}
+
+Node.js v20.16.0
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\E:\nextjs projects\my-english-app-doneâ\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\E:\nextjs projects\my-english-app-doneâ\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node

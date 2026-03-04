@@ -1,232 +1,185 @@
-'use client'
-import React, { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { IoPlay, IoPause, IoVolumeHigh, IoVolumeMute, IoExpand, IoArrowBack, IoBookmark, IoBookmarkOutline } from 'react-icons/io5'
+﻿import Link from 'next/link'
+import { IoPlay, IoBookOutline, IoArrowBack, IoTime, IoFlame, IoCheckmarkCircle, IoStatsChart } from 'react-icons/io5'
 
-const VideoSinglePage = () => {
-  const params = useParams()
-  const router = useRouter()
-  const videoId = params.id as string
+// ─── Data ─────────────────────────────────────────────────
+const videosData: Record<string, {
+  title: string; subtitle: string; level: string; duration: string; xp: number
+  category: string; thumbnail: string; desc: string
+  keyPhrases: { phrase: string; translation: string }[]
+  nextId?: number
+}> = {
+  '1': {
+    title:'طلب في مطعم', subtitle:'Ordering at a Restaurant',
+    level:'A1', duration:'3:45', xp:30, category:'حياة يومية',
+    thumbnail:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80',
+    desc:'تعلم كيف تطلب الطعام وتتكلم مع النادل بإنجليزي طبيعي.',
+    keyPhrases:[
+      { phrase:"I'd like to order...", translation:'أود أن أطلب...' },
+      { phrase:"What do you recommend?", translation:'ماذا توصي؟' },
+      { phrase:"Can I have the bill, please?", translation:'هل يمكنني الحصول على الفاتورة؟' },
+      { phrase:"Is this dish spicy?", translation:'هل هذا الطبق حار؟' },
+    ],
+    nextId: 2
+  },
+  '2': {
+    title:'التقديم لوظيفة', subtitle:'Job Interview',
+    level:'B1', duration:'6:10', xp:55, category:'عمل',
+    thumbnail:'https://images.unsplash.com/photo-1565688534245-05d6b5be184a?w=800&q=80',
+    desc:'أبرز العبارات المهمة في مقابلات العمل الإنجليزية.',
+    keyPhrases:[
+      { phrase:"I have experience in...", translation:'لدي خبرة في...' },
+      { phrase:"My greatest strength is...", translation:'أبرز نقاط قوتي...' },
+      { phrase:"I'm a team player.", translation:'أنا شخص يعمل بروح الفريق.' },
+      { phrase:"I'm eager to learn.", translation:'أنا متحمس للتعلم.' },
+    ],
+    nextId: 3
+  },
+  '3': {
+    title:'عرض تقديمي قصير', subtitle:'Business Presentation',
+    level:'B2', duration:'8:00', xp:70, category:'عمل',
+    thumbnail:'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&q=80',
+    desc:'كيف تبدأ وتنهي عرضك بثقة وتربط أفكارك بشكل احترافي.',
+    keyPhrases:[
+      { phrase:"Let me start by saying...", translation:'دعوني أبدأ بقول...' },
+      { phrase:"Moving on to the next point...", translation:'بالانتقال للنقطة التالية...' },
+      { phrase:"To summarize...", translation:'بالتلخيص...' },
+      { phrase:"I'd be happy to take questions.", translation:'يسعدني الإجابة على أسئلتكم.' },
+    ],
+    nextId: 4
+  },
+  '4': {
+    title:'في المطار', subtitle:'At the Airport',
+    level:'A2', duration:'4:50', xp:40, category:'سفر',
+    thumbnail:'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=80',
+    desc:'تسجيل الأمتعة، الجوازات، والتعامل مع موظفي المطار.',
+    keyPhrases:[
+      { phrase:"I'd like to check in.", translation:'أريد تسجيل الوصول.' },
+      { phrase:"My luggage is overweight.", translation:'أمتعتي ثقيلة الوزن.' },
+      { phrase:"Which gate is my flight?", translation:'ما هو بوابة رحلتي؟' },
+      { phrase:"Is the flight on time?", translation:'هل الرحلة في الموعد؟' },
+    ],
+    nextId: 5
+  },
+}
 
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isMuted, setIsMuted] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [isSaved, setIsSaved] = useState(false)
+const defaultVideo = videosData['1']
 
-  // بيانات الفيديو (في الواقع بتكون جاية من API)
-  const videoData = {
-    id: videoId,
-    title: 'Present Perfect Tense - Complete Guide',
-    description: 'Learn when and how to use the present perfect tense with clear examples and practice exercises.',
-    duration: '15:30',
-    level: 'Intermediate',
-    category: 'Grammar',
-    instructor: 'Sarah Johnson',
-    uploadDate: '2 weeks ago',
-    views: '24K',
-    youtubeUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-  }
+function getLevelStyle(level: string) {
+  if (level === 'A1') return { bg:'#dcfce7', color:'#15803d', border:'#bbf7d0' }
+  if (level === 'A2') return { bg:'#d1fae5', color:'#065f46', border:'#a7f3d0' }
+  if (level === 'B1') return { bg:'#dbeafe', color:'#1d4ed8', border:'#bfdbfe' }
+  if (level === 'B2') return { bg:'#ede9fe', color:'#6d28d9', border:'#ddd6fe' }
+  return { bg:'#fce7f3', color:'#9d174d', border:'#fbcfe8' }
+}
 
-  // Transcript محاكاة
-  const transcript = [
-    { time: '0:00', text: 'Welcome to this lesson on the present perfect tense.' },
-    { time: '0:15', text: 'Today we will learn when and how to use this important tense.' },
-    { time: '1:30', text: 'The present perfect is formed with have/has + past participle.' },
-    { time: '3:45', text: "Let's look at some examples to understand better." }
-  ]
-
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying)
-  }
-
-  const toggleMute = () => {
-    setIsMuted(!isMuted)
-  }
-
-  const toggleSave = () => {
-    setIsSaved(!isSaved)
-  }
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`
-  }
+export default function VideoPlayPage({ params }: { params: { id: string } }) {
+  const video = videosData[params.id] ?? defaultVideo
+  const ls = getLevelStyle(video.level)
 
   return (
-    <div className="min-h-screen bg-gray-900 pt-16">
-      <div className="max-w-7xl mx-auto">
-        
-        {/* Navigation Bar */}
-        <div className="bg-gray-800 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors"
-            >
-              <IoArrowBack className="w-5 h-5" />
-              Back to Videos
-            </button>
-            
-            <div className="flex items-center gap-4">
-              <button
-                onClick={toggleSave}
-                className="flex items-center gap-2 text-white hover:text-yellow-400 transition-colors"
+    <div className="min-h-screen py-10"
+      style={{ background:'linear-gradient(160deg,#f8faff 0%,#eef4ff 40%,#f0faf8 100%)', fontFamily:"'Tajawal',sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');`}</style>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm text-slate-400">
+          <Link href="/videos" className="hover:text-blue-600 font-bold transition-colors flex items-center gap-1">
+            <IoArrowBack className="w-4 h-4" /> الفيديوهات
+          </Link>
+          <span>/</span>
+          <span className="text-slate-600 font-medium">{video.title}</span>
+        </div>
+
+        {/* ─── Video Player ─── */}
+        <div className="rounded-3xl overflow-hidden" style={{ boxShadow:'0 20px 50px rgba(15,23,42,0.2)' }}>
+          <div className="relative aspect-video bg-slate-900">
+            <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover opacity-60" />
+            <div style={{ position:'absolute', inset:0, background:'rgba(15,23,42,0.5)' }} />
+
+            {/* Big Play Button */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div
+                className="w-20 h-20 rounded-full flex items-center justify-center cursor-pointer transition-all hover:scale-110"
+                style={{ background:'rgba(37,99,235,0.9)', boxShadow:'0 12px 40px rgba(37,99,235,0.4)', backdropFilter:'blur(4px)' }}
               >
-                {isSaved ? (
-                  <IoBookmark className="w-5 h-5 text-yellow-400" />
-                ) : (
-                  <IoBookmarkOutline className="w-5 h-5" />
-                )}
-                {isSaved ? 'Saved' : 'Save'}
-              </button>
+                <IoPlay className="w-8 h-8 text-white ml-1" />
+              </div>
+            </div>
+
+            {/* Top bar */}
+            <div className="absolute top-4 right-4 left-4 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-white/70 text-xs">
+                <span className="px-2 py-1 rounded-full font-bold border text-xs" style={{ background: ls.bg, color: ls.color, borderColor: ls.border }}>
+                  {video.level}
+                </span>
+                <span className="bg-black/30 px-2.5 py-1 rounded-full backdrop-blur-sm flex items-center gap-1">
+                  <IoTime className="w-3 h-3" />{video.duration}
+                </span>
+              </div>
+              <span className="text-amber-400 font-bold text-xs flex items-center gap-1 bg-black/30 px-2.5 py-1 rounded-full backdrop-blur-sm">
+                <IoFlame className="w-3 h-3" />{video.xp} XP
+              </span>
+            </div>
+
+            {/* Bottom gradient */}
+            <div style={{ position:'absolute', bottom:0, left:0, right:0, height:80, background:'linear-gradient(to top, rgba(15,23,42,0.9), transparent)' }} />
+            <div className="absolute bottom-4 right-4">
+              <p className="text-xs text-white/60">{video.subtitle}</p>
+              <h2 className="text-white font-extrabold text-lg">{video.title}</h2>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 p-4">
-          
-          {/* Video Player - Main Content */}
-          <div className="lg:col-span-3">
-            
-            {/* Video Container */}
-            <div className="bg-black rounded-lg overflow-hidden">
-              <div className="aspect-video">
-                <iframe
-                  src={videoData.youtubeUrl}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
+        {/* ─── Info + Actions ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+          {/* Description */}
+          <div className="lg:col-span-2 bg-white rounded-2xl p-6 text-right" style={{ border:'1.5px solid #e2e8f0' }}>
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full border" style={{ background: ls.bg, color: ls.color, borderColor: ls.border }}>{video.level}</span>
+                <span className="text-xs text-slate-400 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100">{video.category}</span>
               </div>
             </div>
+            <h1 className="font-extrabold text-slate-900 text-xl mb-1">{video.title}</h1>
+            <p className="text-xs text-slate-400 mb-3">{video.subtitle}</p>
+            <p className="text-slate-600 text-sm leading-7">{video.desc}</p>
 
-            {/* Video Info */}
-            <div className="bg-gray-800 rounded-lg p-6 mt-4">
-              <h1 className="text-2xl font-bold text-white mb-2">{videoData.title}</h1>
-              
-              <div className="flex items-center gap-4 text-gray-300 mb-4">
-                <span>{videoData.views} views</span>
-                <span>•</span>
-                <span>{videoData.uploadDate}</span>
-                <span>•</span>
-                <span className="bg-blue-600 px-2 py-1 rounded text-sm">{videoData.level}</span>
-              </div>
-
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold">SJ</span>
-                </div>
-                <div>
-                  <div className="text-white font-semibold">{videoData.instructor}</div>
-                  <div className="text-gray-400">English Teacher</div>
-                </div>
-              </div>
-
-              <p className="text-gray-300 mb-6">{videoData.description}</p>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-                  <IoBookmark className="w-4 h-4" />
-                  Add Notes
-                </button>
-                <Link 
-                  href={`/videos/transcript/${videoId}`}
-                  className="border border-gray-600 text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  View Transcript
+            <div className="flex gap-3 mt-5">
+              <Link href={`/videos/transcript/${params.id}`}
+                className="flex-1 inline-flex items-center justify-center gap-2 text-white py-3 rounded-2xl font-bold text-sm"
+                style={{ background:'linear-gradient(135deg,#2563eb,#0ea5e9)', boxShadow:'0 8px 20px rgba(37,99,235,0.25)' }}>
+                <IoBookOutline className="w-4 h-4" /> النص والاختبار
+              </Link>
+              {video.nextId && (
+                <Link href={`/videos/play/${video.nextId}`}
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm border-2 border-slate-200 text-slate-700 bg-white">
+                  الفيديو التالي <IoArrowBack className="w-4 h-4" />
                 </Link>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            
-            {/* Transcript Preview */}
-            <div className="bg-gray-800 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-white mb-3">Transcript</h3>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {transcript.map((item, index) => (
-                  <div key={index} className="text-sm">
-                    <span className="text-blue-400 font-mono">{item.time}</span>
-                    <span className="text-gray-300 ml-2">{item.text}</span>
-                  </div>
-                ))}
-              </div>
+          {/* Key Phrases */}
+          <div className="bg-white rounded-2xl p-5 text-right" style={{ border:'1.5px solid #e2e8f0' }}>
+            <div className="flex items-center gap-2 mb-4">
+              <IoStatsChart className="w-4 h-4 text-blue-500" />
+              <h3 className="font-extrabold text-slate-900 text-sm">عبارات مهمة</h3>
             </div>
-
-            {/* Related Videos */}
-            <div className="bg-gray-800 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-white mb-3">Up Next</h3>
-              <div className="space-y-3">
-                {[1, 2, 3].map(item => (
-                  <div key={item} className="flex gap-3 cursor-pointer hover:bg-gray-700 p-2 rounded transition-colors">
-                    <div className="w-16 h-12 bg-gray-600 rounded flex-shrink-0"></div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-white text-sm font-medium line-clamp-2">
-                        Related Video {item}
-                      </div>
-                      <div className="text-gray-400 text-xs">Sarah Johnson • 12K views</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Download Resources */}
-            <div className="bg-gray-800 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-white mb-3">Resources</h3>
-              <div className="space-y-2">
-                <button className="w-full text-left text-blue-400 hover:text-blue-300 text-sm p-2 hover:bg-gray-700 rounded transition-colors">
-                  📝 Practice Exercises (PDF)
-                </button>
-                <button className="w-full text-left text-blue-400 hover:text-blue-300 text-sm p-2 hover:bg-gray-700 rounded transition-colors">
-                  📚 Vocabulary List
-                </button>
-                <button className="w-full text-left text-blue-400 hover:text-blue-300 text-sm p-2 hover:bg-gray-700 rounded transition-colors">
-                  🎧 Audio Version
-                </button>
-              </div>
+            <div className="space-y-3">
+              {video.keyPhrases.map((kp, i) => (
+                <div key={i} className="rounded-xl p-3" style={{ background:'#f8faff', border:'1px solid #e2e8f0' }}>
+                  <p className="font-bold text-blue-700 text-xs mb-0.5" dir="ltr">{kp.phrase}</p>
+                  <p className="text-slate-500 text-xs">{kp.translation}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Practice Section */}
-        <div className="bg-gray-800 rounded-lg p-6 mx-4 mt-6">
-          <h2 className="text-xl font-bold text-white mb-4">Practice What You Learned</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link 
-              href={`/grammar/lessons/related-to-${videoId}`}
-              className="bg-blue-600 text-white p-4 rounded-lg hover:bg-blue-700 transition-colors text-center"
-            >
-              <div className="font-semibold">Grammar Quiz</div>
-              <div className="text-sm opacity-90">Test your understanding</div>
-            </Link>
-            
-            <Link 
-              href={`/vocabulary/practice/related-to-${videoId}`}
-              className="bg-green-600 text-white p-4 rounded-lg hover:bg-green-700 transition-colors text-center"
-            >
-              <div className="font-semibold">Vocabulary Practice</div>
-              <div className="text-sm opacity-90">Learn key words</div>
-            </Link>
-            
-            <Link 
-              href={`/speaking`}
-              className="bg-purple-600 text-white p-4 rounded-lg hover:bg-purple-700 transition-colors text-center"
-            >
-              <div className="font-semibold">Speaking Exercise</div>
-              <div className="text-sm opacity-90">Practice pronunciation</div>
-            </Link>
-          </div>
-        </div>
       </div>
     </div>
   )
 }
-
-export default VideoSinglePage

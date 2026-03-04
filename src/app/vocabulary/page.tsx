@@ -1,297 +1,221 @@
-'use client'
-import React, { useState } from 'react'
-import Link from 'next/link'
-import { IoSearch, IoBookmark, IoBookmarkOutline, IoPlay, IoVolumeHigh } from 'react-icons/io5'
+﻿import Link from 'next/link'
+import { IoBookOutline, IoArrowBack, IoTime, IoTrophy, IoFlame, IoStatsChart } from 'react-icons/io5'
 
-const VocabularyPage = () => {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('all')
-  const [savedWords, setSavedWords] = useState<number[]>([])
+// ─── Types ────────────────────────────────────────────────
+export interface VocabPack {
+  id: string | number
+  title: string
+  description: string
+  total: number
+  level: string
+  minutes: number
+  emoji: string
+  image: string
+  tag?: string
+}
 
-  // بيانات الكلمات
-  const categories = [
-    { id: 'all', name: 'All Words' },
-    { id: 'beginner', name: 'Beginner (A1-A2)' },
-    { id: 'intermediate', name: 'Intermediate (B1-B2)' },
-    { id: 'advanced', name: 'Advanced (C1-C2)' },
-    { id: 'business', name: 'Business English' },
-    { id: 'travel', name: 'Travel & Tourism' }
-  ]
+// ─── Default Data (يُستبدل بـ props أو DB لاحقاً) ────────
+const defaultPacks: VocabPack[] = [
+  {
+    id: 1,
+    title: 'الحياة اليومية',
+    description: 'كلمات تستخدمها كل يوم في المنزل والشارع والتسوق.',
+    total: 30, level: 'A1-A2', minutes: 15, emoji: '🏠',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80',
+    tag: 'الأكثر شعبية'
+  },
+  {
+    id: 2,
+    title: 'العمل والاجتماعات',
+    description: 'مصطلحات المكتب والبريد الإلكتروني والعروض التقديمية.',
+    total: 25, level: 'B1', minutes: 12, emoji: '💼',
+    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80',
+  },
+  {
+    id: 3,
+    title: 'السفر والمطار',
+    description: 'كل ما تحتاجه في المطار والفندق والسياحة.',
+    total: 20, level: 'A2-B1', minutes: 10, emoji: '✈️',
+    image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&q=80',
+    tag: 'جديد'
+  },
+  {
+    id: 4,
+    title: 'الدراسة الأكاديمية',
+    description: 'مفردات الجامعة والأبحاث والنقاشات الأكاديمية.',
+    total: 18, level: 'B2', minutes: 10, emoji: '📚',
+    image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&q=80',
+  },
+  {
+    id: 5,
+    title: 'الصحة والطب',
+    description: 'كلمات مهمة عند الطبيب والصيدلية ووصف الأعراض.',
+    total: 22, level: 'B1', minutes: 11, emoji: '🏥',
+    image: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=400&q=80',
+  },
+  {
+    id: 6,
+    title: 'التكنولوجيا والإنترنت',
+    description: 'مصطلحات التقنية والسوشيال ميديا والبرمجة.',
+    total: 28, level: 'B2-C1', minutes: 14, emoji: '💻',
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80',
+    tag: 'مميز'
+  },
+]
 
-  const words = [
-    {
-      id: 1,
-      word: 'accommodate',
-      definition: 'to provide with a place to live or to be stored in',
-      example: 'The hotel can accommodate up to 500 guests.',
-      pronunciation: '/əˈkɒm.ə.deɪt/',
-      level: 'intermediate',
-      category: 'business',
-      synonyms: ['house', 'lodge', 'hold']
-    },
-    {
-      id: 2,
-      word: 'benevolent',
-      definition: 'kind and helpful',
-      example: 'She was a benevolent woman who volunteered at the shelter.',
-      pronunciation: '/bəˈnev.əl.ənt/',
-      level: 'advanced',
-      category: 'all',
-      synonyms: ['kind', 'compassionate', 'generous']
-    },
-    {
-      id: 3,
-      word: 'convenient',
-      definition: 'suitable for your purposes and needs and causing the least difficulty',
-      example: 'The grocery store is in a convenient location.',
-      pronunciation: '/kənˈviː.ni.ənt/',
-      level: 'beginner',
-      category: 'all',
-      synonyms: ['suitable', 'handy', 'appropriate']
-    },
-    {
-      id: 4,
-      word: 'diligent',
-      definition: 'careful and using a lot of effort',
-      example: 'She is a diligent student who always completes her homework.',
-      pronunciation: '/ˈdɪl.ɪ.dʒənt/',
-      level: 'intermediate',
-      category: 'business',
-      synonyms: ['hard-working', 'conscientious', 'meticulous']
-    },
-    {
-      id: 5,
-      word: 'ecstatic',
-      definition: 'extremely happy',
-      example: 'He was ecstatic when he heard the good news.',
-      pronunciation: '/ekˈstæt.ɪk/',
-      level: 'intermediate',
-      category: 'all',
-      synonyms: ['overjoyed', 'thrilled', 'elated']
-    },
-    {
-      id: 6,
-      word: 'fluctuate',
-      definition: 'to change, especially continuously and between one level or thing and another',
-      example: 'Vegetable prices fluctuate according to the season.',
-      pronunciation: '/ˈflʌk.tʃu.eɪt/',
-      level: 'advanced',
-      category: 'business',
-      synonyms: ['vary', 'change', 'shift']
-    }
-  ]
+// ─── Helpers ──────────────────────────────────────────────
+function getLevelStyle(level: string) {
+  if (level.startsWith('A')) return { bg: '#dcfce7', color: '#15803d', border: '#bbf7d0' }
+  if (level.startsWith('B')) return { bg: '#dbeafe', color: '#1d4ed8', border: '#bfdbfe' }
+  return                            { bg: '#ede9fe', color: '#6d28d9', border: '#ddd6fe' }
+}
 
-  const toggleSaveWord = (wordId: number) => {
-    setSavedWords(prev =>
-      prev.includes(wordId)
-        ? prev.filter(id => id !== wordId)
-        : [...prev, wordId]
-    )
-  }
+function getTagStyle(tag: string) {
+  if (tag === 'الأكثر شعبية') return { bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' }
+  if (tag === 'جديد')         return { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' }
+  return                             { bg: '#fefce8', color: '#a16207', border: '#fef08a' }
+}
 
-  const playPronunciation = (word: string) => {
-    // Simulate pronunciation playback
-    const utterance = new SpeechSynthesisUtterance(word)
-    utterance.rate = 0.8
-    speechSynthesis.speak(utterance)
-  }
-
-  const filteredWords = words.filter(word => {
-    const matchesSearch = word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         word.definition.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = selectedCategory === 'all' || word.category === selectedCategory || word.level === selectedCategory
-    return matchesSearch && matchesCategory
-  })
+// ─── Component ────────────────────────────────────────────
+export default function VocabularyPage({ packs = defaultPacks }: { packs?: VocabPack[] }) {
+  const totalWords = packs.reduce((s, p) => s + p.total, 0)
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 pb-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Vocabulary</h1>
-              <p className="text-gray-600">Expand your English word power</p>
-            </div>
-            <Link 
-              href="/vocabulary/saved"
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-            >
-              <IoBookmark className="w-5 h-5" />
-              Saved Words ({savedWords.length})
-            </Link>
-          </div>
+    <div
+      className="min-h-screen py-10"
+      style={{ background: 'linear-gradient(160deg,#f8faff 0%,#eef4ff 40%,#f0faf8 100%)', fontFamily: "'Tajawal',sans-serif" }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');
+        .pack-card { transition: all 0.25s cubic-bezier(0.4,0,0.2,1); }
+        .pack-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(37,99,235,0.13) !important; border-color: #93c5fd !important; }
+        .pack-card:hover .pack-img { transform: scale(1.05); }
+        .pack-img { transition: transform 0.4s ease; }
+        .cta-arrow { transition: gap 0.2s ease; }
+        .pack-card:hover .cta-arrow { gap: 10px; }
+      `}</style>
 
-          {/* Search and Filter */}
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              
-              {/* Search Bar */}
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoSearch className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search words or definitions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                />
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+
+        {/* ─── Hero ─── */}
+        <section
+          className="rounded-3xl p-8 lg:p-10 text-right relative overflow-hidden"
+          style={{ background: 'linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%)', boxShadow: '0 24px 60px rgba(15,23,42,0.2)' }}
+        >
+          <div style={{ position:'absolute', top:-80, right:-80, width:300, height:300, background:'rgba(14,165,233,0.15)', borderRadius:'50%', filter:'blur(60px)', pointerEvents:'none' }} />
+          <div style={{ position:'absolute', bottom:-40, left:-40, width:200, height:200, background:'rgba(16,185,129,0.1)', borderRadius:'50%', filter:'blur(50px)', pointerEvents:'none' }} />
+
+          <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+            <div>
+              <div className="inline-flex items-center gap-2 text-sm font-bold px-3 py-1.5 rounded-full mb-4" style={{ background:'rgba(14,165,233,0.15)', border:'1px solid rgba(14,165,233,0.3)', color:'#7dd3fc' }}>
+                <IoBookOutline className="w-4 h-4" /> بنك المفردات
               </div>
 
-              {/* Category Filter */}
-              <div className="flex flex-wrap gap-2">
-                {categories.map(category => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                      selectedCategory === category.id
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    {category.name}
-                  </button>
+              <h1 className="font-extrabold text-white mb-3 leading-tight" style={{ fontSize:'clamp(1.8rem,4vw,2.6rem)' }}>
+                مفردات + اختبار فوري
+                <span className="block mt-1" style={{ background:'linear-gradient(135deg,#38bdf8,#6ee7b7)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>
+                  تعلم بالسياق مش بالحفظ
+                </span>
+              </h1>
+
+              <p className="text-slate-400 leading-7" style={{ maxWidth:440 }}>
+                تعلم الكلمة في جملة حقيقية، ثم اختبر نفسك مباشرة —
+                <strong className="text-slate-200"> بدون تكرار ممل</strong>.
+              </p>
+
+              <div className="flex flex-wrap gap-5 mt-6">
+                {[
+                  { icon: IoBookOutline, text: `${totalWords}+ كلمة`, color:'#38bdf8' },
+                  { icon: IoFlame,       text: `${packs.length} موضوع`,  color:'#fbbf24' },
+                  { icon: IoTrophy,      text: 'تصحيح فوري',            color:'#6ee7b7' },
+                  { icon: IoStatsChart,  text: '4 مستويات',             color:'#c4b5fd' },
+                ].map(({ icon: Icon, text, color }) => (
+                  <div key={text} className="flex items-center gap-2 text-sm font-semibold" style={{ color }}>
+                    <Icon className="w-4 h-4" />{text}
+                  </div>
                 ))}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Words Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredWords.map(word => {
-            const isSaved = savedWords.includes(word.id)
-            
-            return (
-              <div key={word.id} className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
-                
-                {/* Word Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-1">{word.word}</h3>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <span className="text-sm">{word.pronunciation}</span>
-                      <button
-                        onClick={() => playPronunciation(word.word)}
-                        className="text-blue-600 hover:text-blue-700 transition-colors"
-                      >
-                        <IoVolumeHigh className="w-4 h-4" />
-                      </button>
+            {/* Hero image collage */}
+            <div className="hidden lg:grid grid-cols-2 gap-2 flex-shrink-0" style={{ width: 220 }}>
+              {defaultPacks.slice(0,4).map((p, i) => (
+                <div key={i} className="rounded-xl overflow-hidden" style={{ height: 80 }}>
+                  <img src={p.image} alt={p.title} className="w-full h-full object-cover opacity-70" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── Packs Grid ─── */}
+        <section>
+          <div className="text-right mb-6">
+            <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-1">اختر موضوعك</p>
+            <h2 className="text-xl font-extrabold text-slate-900">
+              باكات المفردات
+              <span className="text-sm font-semibold text-slate-400 mr-2">({packs.length} باك)</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {packs.map(pack => {
+              const ls = getLevelStyle(pack.level)
+              return (
+                <Link
+                  key={pack.id}
+                  href={`/vocabulary/practice/${pack.id}`}
+                  className="pack-card bg-white rounded-2xl overflow-hidden flex flex-col"
+                  style={{ border:'1.5px solid #e2e8f0', boxShadow:'0 2px 8px rgba(15,23,42,0.05)' }}
+                >
+                  {/* Image */}
+                  <div className="overflow-hidden relative" style={{ height: 140 }}>
+                    <img src={pack.image} alt={pack.title} className="pack-img w-full h-full object-cover" />
+                    <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 40%, rgba(15,23,42,0.6))' }} />
+
+                    {/* Tags overlay */}
+                    <div className="absolute top-3 right-3 flex gap-2">
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full border" style={{ background: ls.bg, color: ls.color, borderColor: ls.border }}>
+                        {pack.level}
+                      </span>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => toggleSaveWord(word.id)}
-                    className="text-gray-400 hover:text-yellow-500 transition-colors"
-                  >
-                    {isSaved ? (
-                      <IoBookmark className="w-6 h-6 text-yellow-500" />
-                    ) : (
-                      <IoBookmarkOutline className="w-6 h-6" />
+                    {pack.tag && (
+                      <div className="absolute top-3 left-3">
+                        {(() => { const ts = getTagStyle(pack.tag!); return (
+                          <span className="text-xs font-bold px-2.5 py-1 rounded-full border" style={{ background: ts.bg, color: ts.color, borderColor: ts.border }}>
+                            {pack.tag}
+                          </span>
+                        )})()}
+                      </div>
                     )}
-                  </button>
-                </div>
 
-                {/* Definition */}
-                <div className="mb-4">
-                  <p className="text-gray-700 mb-2">{word.definition}</p>
-                  <p className="text-sm text-gray-600 italic">
-                    "{word.example}"
-                  </p>
-                </div>
+                    {/* Emoji bottom */}
+                    <div className="absolute bottom-2 right-3 text-2xl">{pack.emoji}</div>
+                  </div>
 
-                {/* Level Badge */}
-                <div className="flex items-center justify-between">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    word.level === 'beginner' ? 'bg-green-100 text-green-800' :
-                    word.level === 'intermediate' ? 'bg-blue-100 text-blue-800' :
-                    'bg-purple-100 text-purple-800'
-                  }`}>
-                    {word.level}
-                  </span>
-                  
-                  {/* Practice Button */}
-                  <Link 
-                    href={`/vocabulary/practice/${word.id}`}
-                    className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
-                  >
-                    <IoPlay className="w-4 h-4" />
-                    Practice
-                  </Link>
-                </div>
+                  {/* Content */}
+                  <div className="p-5 flex flex-col gap-3 flex-1 text-right">
+                    <div>
+                      <h3 className="font-extrabold text-slate-900 text-base mb-1">{pack.title}</h3>
+                      <p className="text-xs text-slate-500 leading-5">{pack.description}</p>
+                    </div>
 
-                {/* Synonyms */}
-                {word.synonyms && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className="text-sm text-gray-600 mb-2">Synonyms:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {word.synonyms.map((synonym, index) => (
-                        <span
-                          key={index}
-                          className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
-                        >
-                          {synonym}
-                        </span>
-                      ))}
+                    <div className="flex items-center gap-3 text-xs text-slate-400 font-medium mt-auto">
+                      <span className="flex items-center gap-1"><IoBookOutline className="w-3.5 h-3.5" />{pack.total} كلمة</span>
+                      <span className="flex items-center gap-1"><IoTime className="w-3.5 h-3.5" />{pack.minutes} دقيقة</span>
+                    </div>
+
+                    <div className="cta-arrow flex items-center gap-1.5 text-sm font-bold" style={{ color:'#2563eb' }}>
+                      ابدأ التدريب <IoArrowBack className="w-4 h-4" />
                     </div>
                   </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Empty State */}
-        {filteredWords.length === 0 && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              <IoSearch className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No words found</h3>
-            <p className="text-gray-600 mb-4">Try changing your search or filter criteria</p>
-            <button
-              onClick={() => {
-                setSearchTerm('')
-                setSelectedCategory('all')
-              }}
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Clear all filters
-            </button>
+                </Link>
+              )
+            })}
           </div>
-        )}
+        </section>
 
-        {/* Quick Stats */}
-        <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">{words.length}</div>
-              <div className="text-gray-600">Total Words</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">{savedWords.length}</div>
-              <div className="text-gray-600">Saved Words</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">
-                {words.filter(w => w.level === 'beginner').length}
-              </div>
-              <div className="text-gray-600">Beginner Level</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">
-                {words.filter(w => w.level === 'advanced').length}
-              </div>
-              <div className="text-gray-600">Advanced Level</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   )
 }
-
-export default VocabularyPage

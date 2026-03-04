@@ -1,374 +1,277 @@
+﻿// app/speaking/page.tsx
 'use client'
-import React, { useState, useRef, useEffect } from 'react'
+
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { IoMic, IoMicOff, IoPlay, IoStop, IoVolumeHigh, IoCheckmarkCircle, IoTime } from 'react-icons/io5'
+import {
+  IoMic, IoArrowBack, IoTime, IoFlame, IoSparkles,
+  IoStatsChart, IoCheckmarkCircle, IoTrophy, IoPlay
+} from 'react-icons/io5'
+import { tasks, levels } from './data'
 
-const SpeakingPage = () => {
-  const [isRecording, setIsRecording] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [selectedExercise, setSelectedExercise] = useState(0)
-  const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null)
-  const [audioUrl, setAudioUrl] = useState<string>('')
-  const [feedback, setFeedback] = useState('')
-  const [showFeedback, setShowFeedback] = useState(false)
+// دوال مساعدة
+function getLevelStyle(level: string) {
+  return levels.find(l => l.label === level)?.color ?? { bg: '#f1f5f9', text: '#475569', border: '#e2e8f0' }
+}
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const audioChunksRef = useRef<Blob[]>([])
-  const audioRef = useRef<HTMLAudioElement>(null)
+function getTagStyle(tag: string) {
+  if (tag === 'للمبتدئين') return { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' }
+  if (tag === 'الأكثر شعبية') return { bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' }
+  if (tag === 'تحدي') return { bg: '#fff1f2', color: '#be123c', border: '#fecdd3' }
+  if (tag === 'متقدم') return { bg: '#fdf4ff', color: '#7e22ce', border: '#e9d5ff' }
+  if (tag === 'جديد') return { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' }
+  return { bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' }
+}
 
-  // تمارين التحدث
-  const speakingExercises = [
-    {
-      id: 1,
-      title: 'Self Introduction',
-      description: 'Practice introducing yourself in English',
-      level: 'Beginner',
-      duration: '2 minutes',
-      prompt: 'Please introduce yourself. Talk about your name, where you are from, your job or studies, and your hobbies.',
-      tips: [
-        'Speak clearly and at a moderate pace',
-        'Use simple sentences',
-        'Practice common phrases like "My name is..." and "I am from..."'
-      ],
-      sampleResponse: 'Hello, my name is Alex. I am from Cairo, Egypt. I am a software developer. In my free time, I enjoy reading books and playing football.'
-    },
-    {
-      id: 2,
-      title: 'Describing Your Day',
-      description: 'Practice talking about your daily routine',
-      level: 'Elementary',
-      duration: '3 minutes',
-      prompt: 'Describe your typical day from morning until evening. What do you usually do?',
-      tips: [
-        'Use present simple tense',
-        'Include time expressions like "in the morning", "after work"',
-        'Describe both work and leisure activities'
-      ],
-      sampleResponse: 'I usually wake up at 7 AM. After breakfast, I go to work. In the evening, I often watch TV or meet friends.'
-    },
-    {
-      id: 3,
-      title: 'Giving Opinions',
-      description: 'Practice expressing your opinions on various topics',
-      level: 'Intermediate',
-      duration: '4 minutes',
-      prompt: 'What is your opinion about remote work? Do you think it is better than working in an office?',
-      tips: [
-        'Use opinion phrases like "In my opinion", "I believe that"',
-        'Provide reasons for your opinion',
-        'Consider both advantages and disadvantages'
-      ],
-      sampleResponse: 'In my opinion, remote work has both advantages and disadvantages. On one hand, it offers flexibility...'
-    },
-    {
-      id: 4,
-      title: 'Business Presentation',
-      description: 'Practice presenting a business idea',
-      level: 'Advanced',
-      duration: '5 minutes',
-      prompt: 'Present a new product or service idea for a company. Explain its features and benefits.',
-      tips: [
-        'Structure your presentation clearly',
-        'Use persuasive language',
-        'Maintain professional tone',
-        'Practice transitions between ideas'
-      ],
-      sampleResponse: 'Good morning everyone. Today, I would like to present our new mobile application that helps people learn languages...'
-    }
-  ]
+const heroStats = [
+  { icon: IoMic, value: `${tasks.length} مهمة`, color: '#38bdf8' },
+  { icon: IoStatsChart, value: '5 مستويات', color: '#a78bfa' },
+  { icon: IoTrophy, value: 'تقييم ذاتي فوري', color: '#fbbf24' },
+  { icon: IoFlame, value: 'نقاط XP لكل مهمة', color: '#6ee7b7' },
+]
 
-  // بدء التسجيل
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream)
-      mediaRecorderRef.current = mediaRecorder
-      audioChunksRef.current = []
+export default function SpeakingPage() {
+  const router = useRouter()
 
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data)
-      }
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' })
-        setRecordedAudio(audioBlob)
-        const audioUrl = URL.createObjectURL(audioBlob)
-        setAudioUrl(audioUrl)
-        generateFeedback()
-      }
-
-      mediaRecorder.start()
-      setIsRecording(true)
-    } catch (error) {
-      console.error('Error accessing microphone:', error)
-      alert('Please allow microphone access to use speaking practice.')
-    }
+  const handleStartExercise = (taskId: number) => {
+    router.push(`/speaking/${taskId}`)
   }
-
-  // إيقاف التسجيل
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop()
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop())
-      setIsRecording(false)
-    }
-  }
-
-  // تشغيل التسجيل
-  const playRecording = () => {
-    if (audioRef.current && audioUrl) {
-      audioRef.current.play()
-      setIsPlaying(true)
-    }
-  }
-
-  // إيقاف التشغيل
-  const stopPlaying = () => {
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.currentTime = 0
-      setIsPlaying(false)
-    }
-  }
-
-  // توليد feedback (محاكاة)
-  const generateFeedback = () => {
-    const exercises = [
-      "Good job! Your pronunciation is clear. Try to speak a bit slower for better clarity.",
-      "Excellent vocabulary usage! Work on your sentence rhythm and intonation.",
-      "Great content! Practice using more linking words to connect your ideas.",
-      "Good fluency! Focus on correcting the pronunciation of specific words."
-    ]
-    const randomFeedback = exercises[Math.floor(Math.random() * exercises.length)]
-    setFeedback(randomFeedback)
-    setShowFeedback(true)
-  }
-
-  // عندما ينتهي التشغيل
-  useEffect(() => {
-    const audio = audioRef.current
-    if (audio) {
-      const handleEnded = () => setIsPlaying(false)
-      audio.addEventListener('ended', handleEnded)
-      return () => audio.removeEventListener('ended', handleEnded)
-    }
-  }, [audioUrl])
-
-  const currentExercise = speakingExercises[selectedExercise]
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 pb-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Speaking Practice</h1>
-          <p className="text-gray-600">Improve your English speaking skills with interactive exercises</p>
-        </div>
+    <div
+      className="min-h-screen py-10"
+      style={{ background: 'linear-gradient(160deg,#f8faff 0%,#eef4ff 40%,#f0faf8 100%)', fontFamily: "'Tajawal', sans-serif" }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');
+        .task-card { 
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+          border: 1.5px solid #e2e8f0; 
+          cursor: pointer;
+        }
+        .task-card:hover { 
+          transform: translateY(-4px); 
+          box-shadow: 0 20px 40px rgba(37, 99, 235, 0.12) !important; 
+          border-color: #93c5fd !important; 
+        }
+        .task-card:hover .task-img { 
+          transform: scale(1.06); 
+        }
+        .task-img { 
+          transition: transform 0.4s ease; 
+        }
+        .mic-pulse { 
+          animation: mic-ping 2s ease-in-out infinite; 
+        }
+        @keyframes mic-ping { 
+          0%, 100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4); } 
+          50% { box-shadow: 0 0 0 12px rgba(14, 165, 233, 0); } 
+        }
+      `}</style>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Column - Exercises List */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Speaking Exercises</h2>
-              <div className="space-y-3">
-                {speakingExercises.map((exercise, index) => (
-                  <button
-                    key={exercise.id}
-                    onClick={() => {
-                      setSelectedExercise(index)
-                      setShowFeedback(false)
-                      setRecordedAudio(null)
-                    }}
-                    className={`w-full text-left p-4 rounded-lg border transition-colors ${
-                      selectedExercise === index
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900">{exercise.title}</h3>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        exercise.level === 'Beginner' ? 'bg-green-100 text-green-800' :
-                        exercise.level === 'Elementary' ? 'bg-blue-100 text-blue-800' :
-                        exercise.level === 'Intermediate' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-purple-100 text-purple-800'
-                      }`}>
-                        {exercise.level}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{exercise.description}</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <IoTime className="w-3 h-3" />
-                        {exercise.duration}
-                      </span>
-                    </div>
-                  </button>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        {/* Hero Section */}
+        <section
+          className="rounded-3xl p-8 lg:p-10 text-right relative overflow-hidden"
+          style={{ background: 'linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%)', boxShadow: '0 24px 60px rgba(15,23,42,0.2)' }}
+        >
+          <div style={{ position: 'absolute', top: -80, right: -80, width: 300, height: 300, background: 'rgba(14,165,233,0.15)', borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: -40, left: -40, width: 200, height: 200, background: 'rgba(139,92,246,0.12)', borderRadius: '50%', filter: 'blur(50px)', pointerEvents: 'none' }} />
+
+          <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+            <div>
+              <div className="inline-flex items-center gap-2 text-sm font-bold px-3 py-1.5 rounded-full mb-4"
+                style={{ background: 'rgba(14,165,233,0.15)', border: '1px solid rgba(14,165,233,0.3)', color: '#7dd3fc' }}>
+                <IoMic className="w-4 h-4" /> محادثة ونطق
+              </div>
+
+              <h1 className="font-extrabold text-white mb-3 leading-tight" style={{ fontSize: 'clamp(1.8rem,4vw,2.6rem)' }}>
+                اختبر نطقك وطلاقتك
+                <span className="block mt-1" style={{ background: 'linear-gradient(135deg,#38bdf8,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  تكلّم وتحسّن كل يوم
+                </span>
+              </h1>
+
+              <p className="text-slate-400 leading-7" style={{ maxWidth: 440 }}>
+                مهام قصيرة مع <strong className="text-slate-200">نصائح مباشرة وتقييم ذاتي</strong> —
+                لأن التحسن الحقيقي يبدأ بالكلام مش بالحفظ.
+              </p>
+
+              <div className="flex flex-wrap gap-4 mt-6">
+                {heroStats.map(({ icon: Icon, value, color }) => (
+                  <div key={value} className="flex items-center gap-2 text-sm font-semibold" style={{ color }}>
+                    <Icon className="w-4 h-4" />{value}
+                  </div>
                 ))}
               </div>
             </div>
 
-            {/* Quick Tips */}
-            <div className="bg-blue-50 rounded-xl p-6 mt-6">
-              <h3 className="font-semibold text-blue-900 mb-3">💡 Speaking Tips</h3>
-              <ul className="space-y-2 text-sm text-blue-800">
-                <li>• Practice regularly, even for short periods</li>
-                <li>• Don't worry about making mistakes</li>
-                <li>• Record yourself and listen back</li>
-                <li>• Focus on clarity, not speed</li>
-                <li>• Use gestures to help with rhythm</li>
-              </ul>
+            {/* Animated Mic */}
+            <div className="hidden lg:flex flex-col items-center gap-4 flex-shrink-0">
+              <div className="mic-pulse w-20 h-20 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#2563eb,#0ea5e9)' }}>
+                <IoMic className="w-9 h-9 text-white" />
+              </div>
+              <div className="text-center">
+                <p className="text-white font-bold text-sm">جاهز للتسجيل؟</p>
+                <p className="text-slate-400 text-xs">اضغط على أي مهمة</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-2" style={{ width: 180 }}>
+                {tasks.slice(0, 4).map((t, i) => (
+                  <div key={i} className="rounded-xl overflow-hidden" style={{ height: 70 }}>
+                    <img src={t.image} alt={t.title} className="w-full h-full object-cover opacity-60" />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* Right Column - Exercise Area */}
-          <div className="lg:col-span-2 space-y-6">
-            
-            {/* Current Exercise */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">{currentExercise.title}</h2>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <IoTime className="w-4 h-4" />
-                  {currentExercise.duration}
-                </div>
+        {/* Level Badges */}
+        <section>
+          <div className="flex flex-wrap gap-3">
+            {levels.map(l => (
+              <div key={l.label} className="flex items-center gap-2 px-4 py-2 rounded-2xl border font-bold text-sm"
+                style={{ background: l.color.bg, color: l.color.text, borderColor: l.color.border }}>
+                {l.label}
+                <span className="font-medium opacity-70 text-xs">{l.desc}</span>
+                <span className="text-xs opacity-60">({tasks.filter(t => t.level === l.label).length} مهمة)</span>
               </div>
+            ))}
+          </div>
+        </section>
 
-              <div className="mb-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Instructions:</h3>
-                <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">
-                  {currentExercise.prompt}
-                </p>
-              </div>
+        {/* Tasks Grid */}
+        <section>
+          <div className="text-right mb-6">
+            <p className="text-xs font-bold text-violet-500 uppercase tracking-widest mb-1">اختر مهمتك</p>
+            <h2 className="text-xl font-extrabold text-slate-900">
+              مهام التحدث
+              <span className="text-sm font-semibold text-slate-400 mr-2">({tasks.length} مهمة)</span>
+            </h2>
+          </div>
 
-              {/* Tips */}
-              <div className="mb-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Tips:</h3>
-                <ul className="space-y-1">
-                  {currentExercise.tips.map((tip, index) => (
-                    <li key={index} className="flex items-center gap-2 text-gray-700">
-                      <IoCheckmarkCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                      {tip}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {tasks.map(task => {
+              const ls = getLevelStyle(task.level)
+              return (
+                <div
+                  key={task.id}
+                  onClick={() => handleStartExercise(task.id)}
+                  className="task-card bg-white rounded-2xl overflow-hidden flex flex-col"
+                  style={{ boxShadow: '0 2px 8px rgba(15,23,42,0.05)' }}
+                >
+                  {/* Image */}
+                  <div className="overflow-hidden relative" style={{ height: 140 }}>
+                    <img src={task.image} alt={task.title} className="task-img w-full h-full object-cover" />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(15,23,42,0.7))' }} />
 
-              {/* Sample Response */}
-              <div className="mb-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Sample Response:</h3>
-                <p className="text-gray-600 italic bg-yellow-50 p-4 rounded-lg">
-                  "{currentExercise.sampleResponse}"
-                </p>
-              </div>
+                    {/* Level */}
+                    <div className="absolute top-3 right-3">
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full border"
+                        style={{ background: ls.bg, color: ls.color, borderColor: ls.border }}>
+                        {task.level}
+                      </span>
+                    </div>
 
-              {/* Recording Controls */}
-              <div className="border-t pt-6">
-                <div className="flex flex-col sm:flex-row items-center gap-4 justify-between">
-                  <div className="flex items-center gap-4">
-                    {!isRecording ? (
-                      <button
-                        onClick={startRecording}
-                        className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold"
-                      >
-                        <IoMic className="w-5 h-5" />
-                        Start Recording
-                      </button>
-                    ) : (
-                      <button
-                        onClick={stopRecording}
-                        className="flex items-center gap-2 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors font-semibold"
-                      >
-                        <IoMicOff className="w-5 h-5" />
-                        Stop Recording
-                      </button>
+                    {/* Tag */}
+                    {task.tag && (
+                      <div className="absolute top-3 left-3">
+                        {(() => {
+                          const ts = getTagStyle(task.tag!); return (
+                            <span className="text-xs font-bold px-2.5 py-1 rounded-full border"
+                              style={{ background: ts.bg, color: ts.color, borderColor: ts.border }}>
+                              {task.tag}
+                            </span>
+                          )
+                        })()}
+                      </div>
                     )}
 
-                    {recordedAudio && (
-                      <>
-                        {!isPlaying ? (
-                          <button
-                            onClick={playRecording}
-                            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-                          >
-                            <IoPlay className="w-5 h-5" />
-                            Play Back
-                          </button>
-                        ) : (
-                          <button
-                            onClick={stopPlaying}
-                            className="flex items-center gap-2 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors font-semibold"
-                          >
-                            <IoStop className="w-5 h-5" />
-                            Stop
-                          </button>
-                        )}
-                      </>
-                    )}
+                    {/* Bottom */}
+                    <div className="absolute bottom-3 right-4 left-4 flex items-end justify-between">
+                      <span className="text-white/70 text-xs flex items-center gap-1 bg-black/30 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                        <IoTime className="w-3 h-3" />{task.duration}
+                      </span>
+                      <span className="text-amber-400 text-xs font-bold flex items-center gap-1">
+                        <IoFlame className="w-3 h-3" />{task.xp} XP
+                      </span>
+                    </div>
                   </div>
 
-                  {isRecording && (
-                    <div className="flex items-center gap-2 text-red-600">
-                      <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
-                      <span className="font-semibold">Recording...</span>
+                  {/* Content */}
+                  <div className="p-5 flex flex-col gap-3 flex-1 text-right">
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 mb-0.5">{task.subtitle}</p>
+                      <h3 className="font-extrabold text-slate-900 text-base mb-1">{task.title}</h3>
+                      <p className="text-xs text-slate-500 leading-5">{task.hint}</p>
                     </div>
-                  )}
-                </div>
 
-                {/* Audio Player (Hidden) */}
-                <audio ref={audioRef} src={audioUrl} className="hidden" />
-              </div>
-            </div>
+                    {/* Tips */}
+                    <div className="rounded-xl p-3 space-y-1" style={{ background: '#f8faff', border: '1px solid #e2e8f0' }}>
+                      {task.tips.map((tip, i) => (
+                        <p key={i} className="text-xs text-slate-500 flex items-start gap-1.5">
+                          <IoCheckmarkCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                          {tip}
+                        </p>
+                      ))}
+                    </div>
 
-            {/* Feedback Section */}
-            {showFeedback && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-                <h3 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
-                  <IoVolumeHigh className="w-5 h-5" />
-                  AI Feedback
-                </h3>
-                <p className="text-green-800">{feedback}</p>
-                <div className="mt-4 flex gap-2">
-                  <button className="text-sm text-green-700 hover:text-green-800 font-medium">
-                    Practice Again
-                  </button>
-                  <span className="text-green-600">•</span>
-                  <button className="text-sm text-green-700 hover:text-green-800 font-medium">
-                    Save Recording
-                  </button>
+                    <div className="flex items-center justify-between mt-auto">
+                      <span className="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">{task.category}</span>
+                      <div className="flex items-center gap-1.5 text-sm font-bold" style={{ color: '#7c3aed' }}>
+                        ابدأ المهمة <IoArrowBack className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })}
+          </div>
+        </section>
 
-            {/* Progress Stats */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Your Speaking Progress</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">12</div>
-                  <div className="text-sm text-gray-600">Exercises Done</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">45</div>
-                  <div className="text-sm text-gray-600">Minutes Practiced</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">8.2</div>
-                  <div className="text-sm text-gray-600">Avg. Score</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">7</div>
-                  <div className="text-sm text-gray-600">Day Streak</div>
-                </div>
+        {/* Tips Banner */}
+        <section>
+          <div className="text-right mb-5">
+            <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-1">نصائح التحدث</p>
+            <h2 className="text-xl font-extrabold text-slate-900">كيف تتحسن أسرع</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { emoji: '🎙️', tip: 'سجّل نفسك واستمع للتسجيل — الاستماع لنفسك هو أسرع طريقة لاكتشاف الأخطاء.' },
+              { emoji: '⏱️', tip: 'لا تتوقف لما تغلط — الاستمرارية أهم من الدقة في مرحلة التعلم.' },
+              { emoji: '🔁', tip: 'كرر كل مهمة 3 مرات — المرة الثالثة ستكون أفضل بكتير من الأولى.' },
+            ].map((t, i) => (
+              <div key={i} className="bg-white rounded-2xl p-5 text-right" style={{ border: '1.5px solid #e2e8f0', transition: 'all 0.2s ease' }}>
+                <div className="text-3xl mb-3">{t.emoji}</div>
+                <p className="text-sm text-slate-600 leading-7">{t.tip}</p>
               </div>
+            ))}
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="pb-4">
+          <div className="rounded-3xl p-7 relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg,#0f172a,#1e3a5f)', boxShadow: '0 20px 50px rgba(15,23,42,0.18)' }}>
+            <div style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, background: 'rgba(139,92,246,0.2)', borderRadius: '50%', filter: 'blur(40px)', pointerEvents: 'none' }} />
+            <div className="relative flex flex-col sm:flex-row items-center justify-between gap-5 text-right">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <IoSparkles className="w-4 h-4 text-violet-400" />
+                  <span className="text-violet-300 text-sm font-bold">ابدأ من المستوى المناسب</span>
+                </div>
+                <p className="text-white font-bold">مش عارف مستواك؟ اعمل اختبار تحديد المستوى أولاً.</p>
+                <p className="text-slate-400 text-sm mt-1">5 دقائق كافية لتحديد نقطة بدايتك الصحيحة.</p>
+              </div>
+              <Link href="/assessment"
+                className="flex-shrink-0 inline-flex items-center gap-2 text-white px-6 py-3 rounded-2xl font-bold text-sm"
+                style={{ background: 'linear-gradient(135deg,#7c3aed,#a78bfa)', boxShadow: '0 8px 20px rgba(124,58,237,0.3)' }}>
+                <IoPlay className="w-4 h-4" /> اختبر مستواك
+              </Link>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   )
 }
-
-export default SpeakingPage

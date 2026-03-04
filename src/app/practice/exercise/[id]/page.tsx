@@ -1,233 +1,270 @@
-'use client'
-import React, { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+﻿'use client'
+import { useState } from 'react'
 import Link from 'next/link'
-import { IoArrowBack, IoTime, IoStar, IoVolumeHigh, IoCheckmarkCircle, IoCloseCircle, IoPlay, IoPause, IoRefresh } from 'react-icons/io5'
+import { IoArrowBack, IoArrowForward, IoCheckmarkCircle, IoCloseCircle, IoTime, IoFlame, IoTrophy } from 'react-icons/io5'
 
-const ExercisePage = () => {
-  const params = useParams()
-  const router = useRouter()
-  const exerciseId = params.id as string
-
-  const [currentQuestion, setCurrentQuestion] = useState(0)
-  const [userAnswers, setUserAnswers] = useState<string[]>([])
-  const [showResults, setShowResults] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(300) // 5 minutes
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [score, setScore] = useState(0)
-
-  // بيانات التمرين
-  const exerciseData = {
-    id: exerciseId,
-    title: 'Daily Conversation Practice',
-    type: 'speaking',
-    level: 'Beginner',
-    duration: '5-7 min',
-    description: 'Practice common everyday conversations with instant feedback',
-    totalQuestions: 5,
-    xp: 25,
+// ─── Data ─────────────────────────────────────────────────
+const exercisesData: Record<string, {
+  title: string
+  subtitle: string
+  level: string
+  duration: string
+  xp: number
+  image: string
+  questions: {
+    id: string
+    text: string
+    highlightWord?: string
+    type: 'mcq'
+    options: { id: string; text: string; correct: boolean }[]
+    explanation: string
+  }[]
+}> = {
+  '1': {
+    title: 'اختبار سريع — الأزمنة',
+    subtitle: 'Simple Tenses',
+    level: 'A2',
+    duration: '5 دقائق',
+    xp: 30,
+    image: 'https://images.unsplash.com/photo-1506784365847-bbad939e9335?w=800&q=80',
     questions: [
       {
-        id: 1,
-        type: 'speaking',
-        question: 'Introduce yourself. Say your name, where you are from, and what you do.',
-        audioUrl: '/audio/intro.mp3',
-        correctAnswer: 'self_introduction',
-        tips: ['Speak clearly and slowly', 'Use simple sentences', 'Practice common phrases']
-      },
-      {
-        id: 2,
-        type: 'listening',
-        question: 'Listen to the conversation and answer: Where are they going?',
-        audioUrl: '/audio/conversation1.mp3',
-        options: ['To the cinema', 'To a restaurant', 'To the park', 'To the mall'],
-        correctAnswer: 'To a restaurant',
-        transcript: 'A: "I\'m hungry, let\'s get something to eat." B: "Good idea! There\'s a new Italian restaurant nearby."'
-      },
-      {
-        id: 3,
-        type: 'vocabulary',
-        question: 'Choose the correct word to complete the sentence: "I need to _____ a hotel for my trip."',
-        options: ['book', 'booking', 'booked', 'books'],
-        correctAnswer: 'book',
-        explanation: 'We use the base form of the verb after "to"'
-      },
-      {
-        id: 4,
-        type: 'speaking',
-        question: 'Describe what you see in this picture. Talk about the people, place, and activities.',
-        imageUrl: '/images/street-scene.jpg',
-        correctAnswer: 'picture_description',
-        tips: ['Start with the main subject', 'Describe from left to right', 'Use present continuous tense']
-      },
-      {
-        id: 5,
-        type: 'grammar',
-        question: 'Choose the correct sentence:',
+        id: 'q1', type: 'mcq',
+        text: 'She ___ to work every day.',
+        highlightWord: '___',
+        explanation: 'نستخدم goes لأن الفاعل she مفرد — نضيف s أو es في المضارع البسيط.',
         options: [
-          'She don\'t like coffee.',
-          'She doesn\'t likes coffee.', 
-          'She doesn\'t like coffee.',
-          'She not like coffee.'
-        ],
-        correctAnswer: 'She doesn\'t like coffee.',
-        explanation: 'With "she/he/it", we use "doesn\'t" + base verb'
-      }
+          { id: 'a', text: 'go',    correct: false },
+          { id: 'b', text: 'goes',  correct: true  },
+          { id: 'c', text: 'going', correct: false },
+          { id: 'd', text: 'gone',  correct: false },
+        ]
+      },
+      {
+        id: 'q2', type: 'mcq',
+        text: 'They ___ football last Saturday.',
+        highlightWord: '___',
+        explanation: 'played هي صيغة الماضي البسيط للفعل play — نضيف ed للأفعال المنتظمة.',
+        options: [
+          { id: 'a', text: 'play',    correct: false },
+          { id: 'b', text: 'plays',   correct: false },
+          { id: 'c', text: 'played',  correct: true  },
+          { id: 'd', text: 'playing', correct: false },
+        ]
+      },
+      {
+        id: 'q3', type: 'mcq',
+        text: 'I ___ visit my family next weekend.',
+        highlightWord: '___',
+        explanation: 'will للقرارات والوعود اللحظية في المستقبل.',
+        options: [
+          { id: 'a', text: 'will',  correct: true  },
+          { id: 'b', text: 'going', correct: false },
+          { id: 'c', text: 'was',   correct: false },
+          { id: 'd', text: 'did',   correct: false },
+        ]
+      },
+      {
+        id: 'q4', type: 'mcq',
+        text: 'The train ___ at 8 AM every morning.',
+        highlightWord: '___',
+        explanation: 'departs مضارع بسيط لأن الجملة عن جدول منتظم وثابت.',
+        options: [
+          { id: 'a', text: 'departed',  correct: false },
+          { id: 'b', text: 'departing', correct: false },
+          { id: 'c', text: 'departs',   correct: true  },
+          { id: 'd', text: 'will depart', correct: false },
+        ]
+      },
+      {
+        id: 'q5', type: 'mcq',
+        text: 'We ___ the project before the deadline yesterday.',
+        highlightWord: '___',
+        explanation: 'finished ماضي بسيط — كلمة yesterday دليل واضح على استخدام الماضي.',
+        options: [
+          { id: 'a', text: 'finish',    correct: false },
+          { id: 'b', text: 'finishes',  correct: false },
+          { id: 'c', text: 'finishing', correct: false },
+          { id: 'd', text: 'finished',  correct: true  },
+        ]
+      },
+    ]
+  },
+  '2': {
+    title: 'اختبار سريع — المفردات اليومية',
+    subtitle: 'Daily Vocabulary',
+    level: 'B1',
+    duration: '7 دقائق',
+    xp: 40,
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80',
+    questions: [
+      {
+        id: 'q1', type: 'mcq',
+        text: 'The meeting was postponed to next week.',
+        highlightWord: 'postponed',
+        explanation: 'postpone = يؤجل. تستخدمها لما حاجة كانت هتحصل بس اتأخرت لوقت تاني.',
+        options: [
+          { id: 'a', text: 'تم إلغاؤه',   correct: false },
+          { id: 'b', text: 'تم تأجيله',   correct: true  },
+          { id: 'c', text: 'تم حضوره',    correct: false },
+          { id: 'd', text: 'تم إلغاء حضوره', correct: false },
+        ]
+      },
+      {
+        id: 'q2', type: 'mcq',
+        text: 'She commutes to work by train every morning.',
+        highlightWord: 'commutes',
+        explanation: 'commute = يتنقل يومياً للعمل. مختلف عن travel اللي معناها سفر عام.',
+        options: [
+          { id: 'a', text: 'تعمل من البيت',      correct: false },
+          { id: 'b', text: 'تتنقل يومياً للعمل',  correct: true  },
+          { id: 'c', text: 'تسافر للخارج',         correct: false },
+          { id: 'd', text: 'تتأخر عن العمل',       correct: false },
+        ]
+      },
+      {
+        id: 'q3', type: 'mcq',
+        text: 'The store offers a generous discount on weekends.',
+        highlightWord: 'discount',
+        explanation: 'discount = خصم على السعر. مختلف عن sale اللي ممكن تكون تخفيضات موسمية عامة.',
+        options: [
+          { id: 'a', text: 'ضريبة إضافية', correct: false },
+          { id: 'b', text: 'منتجات مجانية', correct: false },
+          { id: 'c', text: 'خصم على السعر', correct: true  },
+          { id: 'd', text: 'عروض خاصة للأعضاء', correct: false },
+        ]
+      },
+    ]
+  },
+  '3': {
+    title: 'اختبار سريع — الجمل المركبة',
+    subtitle: 'Complex Sentences',
+    level: 'B2',
+    duration: '10 دقائق',
+    xp: 55,
+    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80',
+    questions: [
+      {
+        id: 'q1', type: 'mcq',
+        text: '___ it was raining heavily, they decided to go out.',
+        highlightWord: '___',
+        explanation: 'Although = بالرغم من — تستخدمها لربط فكرتين متعارضتين.',
+        options: [
+          { id: 'a', text: 'Because',  correct: false },
+          { id: 'b', text: 'Although', correct: true  },
+          { id: 'c', text: 'Since',    correct: false },
+          { id: 'd', text: 'So',       correct: false },
+        ]
+      },
+      {
+        id: 'q2', type: 'mcq',
+        text: 'I was tired; ___, I finished all the work.',
+        highlightWord: '___',
+        explanation: 'However = مع ذلك / بالرغم من ذلك — يربط جملتين متعارضتين بعد فاصلة منقوطة.',
+        options: [
+          { id: 'a', text: 'therefore', correct: false },
+          { id: 'b', text: 'because',   correct: false },
+          { id: 'c', text: 'however',   correct: true  },
+          { id: 'd', text: 'although',  correct: false },
+        ]
+      },
+      {
+        id: 'q3', type: 'mcq',
+        text: 'She studied hard ___ she wanted to pass the exam.',
+        highlightWord: '___',
+        explanation: 'because = لأن — يربط الجملة بسببها.',
+        options: [
+          { id: 'a', text: 'although', correct: false },
+          { id: 'b', text: 'however',  correct: false },
+          { id: 'c', text: 'despite',  correct: false },
+          { id: 'd', text: 'because',  correct: true  },
+        ]
+      },
     ]
   }
+}
 
-  // Timer
-  useEffect(() => {
-    if (timeLeft > 0 && !showResults) {
-      const timer = setInterval(() => {
-        setTimeLeft(prev => prev - 1)
-      }, 1000)
-      return () => clearInterval(timer)
-    }
-  }, [timeLeft, showResults])
+const defaultExercise = exercisesData['1']
 
-  const handleAnswer = (answer: string) => {
-    const newAnswers = [...userAnswers, answer]
-    setUserAnswers(newAnswers)
+// ─── Component ────────────────────────────────────────────
+export default function ExercisePage({ params }: { params: { id: string } }) {
+  const exercise = exercisesData[params.id] ?? defaultExercise
 
-    // Check if answer is correct
-    const currentQ = exerciseData.questions[currentQuestion]
-    if (answer === currentQ.correctAnswer) {
-      setScore(prev => prev + 1)
-    }
+  const [currentIdx, setCurrentIdx] = useState(0)
+  const [selected,   setSelected]   = useState<string | null>(null)
+  const [score,      setScore]       = useState(0)
+  const [finished,   setFinished]    = useState(false)
 
-    if (currentQuestion < exerciseData.questions.length - 1) {
-      setCurrentQuestion(prev => prev + 1)
-    } else {
-      setShowResults(true)
-    }
+  const question  = exercise.questions[currentIdx]
+  const answered  = selected !== null
+  const isCorrect = question?.options.find(o => o.id === selected)?.correct ?? false
+  const progress  = Math.round(((currentIdx + (answered ? 1 : 0)) / exercise.questions.length) * 100)
+
+  function handleSelect(id: string) {
+    if (answered) return
+    setSelected(id)
+    if (question.options.find(o => o.id === id)?.correct) setScore(s => s + 1)
   }
-
-  const playAudio = (url: string) => {
-    // Simulate audio playback
-    setIsPlaying(true)
-    setTimeout(() => setIsPlaying(false), 3000)
+  function handleNext() {
+    if (currentIdx + 1 >= exercise.questions.length) { setFinished(true); return }
+    setCurrentIdx(i => i + 1); setSelected(null)
   }
+  function handleRestart() { setCurrentIdx(0); setSelected(null); setScore(0); setFinished(false) }
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`
+  const scorePercent = Math.round((score / exercise.questions.length) * 100)
+
+  function getLevelStyle(level: string) {
+    if (level.startsWith('A')) return { bg:'#dcfce7', color:'#15803d', border:'#bbf7d0' }
+    if (level.startsWith('B')) return { bg:'#dbeafe', color:'#1d4ed8', border:'#bfdbfe' }
+    return { bg:'#ede9fe', color:'#6d28d9', border:'#ddd6fe' }
   }
+  const ls = getLevelStyle(exercise.level)
 
-  const restartExercise = () => {
-    setCurrentQuestion(0)
-    setUserAnswers([])
-    setShowResults(false)
-    setTimeLeft(300)
-    setScore(0)
-  }
-
-  const currentQuestionData = exerciseData.questions[currentQuestion]
-
-  if (showResults) {
-    const percentage = (score / exerciseData.questions.length) * 100
+  // ─── Finished ───────────────────────────────────────────
+  if (finished) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 pt-20 pb-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <IoArrowBack className="w-5 h-5" />
-              Back to Practice
-            </button>
-          </div>
+      <div className="min-h-screen flex items-center justify-center py-10 px-4"
+        style={{ background:'linear-gradient(160deg,#f8faff 0%,#eef4ff 40%,#f0faf8 100%)', fontFamily:"'Tajawal',sans-serif" }}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');`}</style>
 
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-            
-            {/* Result Icon */}
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              {percentage >= 70 ? (
-                <IoCheckmarkCircle className="w-10 h-10 text-green-600" />
-              ) : (
-                <IoCloseCircle className="w-10 h-10 text-red-600" />
-              )}
-            </div>
-
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Exercise Complete!</h1>
-            
-            {/* Score Circle */}
-            <div className="relative w-32 h-32 mx-auto mb-6">
-              <svg className="w-full h-full" viewBox="0 0 100 100">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="#e5e7eb"
-                  strokeWidth="8"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke={percentage >= 70 ? "#10b981" : "#ef4444"}
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={`${percentage * 2.827} 282.7`}
-                  transform="rotate(-90 50 50)"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">{score}/{exerciseData.questions.length}</div>
-                  <div className="text-sm text-gray-600">Correct</div>
-                </div>
+        <div className="w-full max-w-md rounded-3xl overflow-hidden" style={{ border:'1.5px solid #e2e8f0', boxShadow:'0 24px 60px rgba(15,23,42,0.12)' }}>
+          <div className="relative" style={{ height:160 }}>
+            <img src={exercise.image} alt="" className="w-full h-full object-cover" />
+            <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(15,23,42,0.3), rgba(15,23,42,0.75))' }} />
+            <div className="absolute inset-0 flex items-center justify-center text-center">
+              <div>
+                <div className="text-5xl mb-2">{scorePercent >= 80 ? '🏆' : scorePercent >= 50 ? '💪' : '📖'}</div>
+                <p className="text-white font-bold">{exercise.title}</p>
               </div>
             </div>
+          </div>
 
-            {/* Performance Message */}
-            <div className="mb-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                {percentage >= 90 ? 'Excellent! 🎉' : 
-                 percentage >= 70 ? 'Good Job! 👍' : 
-                 'Keep Practicing! 💪'}
-              </h3>
-              <p className="text-gray-600">
-                {percentage >= 90 ? 'You mastered this exercise!' :
-                 percentage >= 70 ? 'You\'re making great progress!' :
-                 'Practice makes perfect. Try again!'}
+          <div className="p-7 bg-white text-center">
+            <h2 className="font-extrabold text-slate-900 text-2xl mb-1">انتهى التمرين!</h2>
+            <p className="text-slate-400 text-sm mb-6">نتيجتك النهائية</p>
+
+            <div className="rounded-2xl p-5 mb-6" style={{ background:'linear-gradient(135deg,#f0f9ff,#f0fdfa)', border:'1.5px solid #bfdbfe' }}>
+              <div className="font-extrabold text-4xl mb-1" style={{ background:'linear-gradient(135deg,#2563eb,#0ea5e9)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>
+                {score}/{exercise.questions.length}
+              </div>
+              <div className="text-slate-500 text-sm mb-1">{scorePercent}% إجابات صحيحة</div>
+              <div className="flex items-center justify-center gap-1 text-amber-500 text-sm font-bold mb-3">
+                <IoFlame className="w-4 h-4" /> +{Math.round(exercise.xp * scorePercent / 100)} XP مكتسبة
+              </div>
+              <div className="h-2 rounded-full bg-slate-100">
+                <div className="h-2 rounded-full" style={{ width:`${scorePercent}%`, background:'linear-gradient(90deg,#2563eb,#0ea5e9)', transition:'width 0.8s ease' }} />
+              </div>
+              <p className="text-xs text-slate-400 mt-3">
+                {scorePercent >= 80 ? '🎉 ممتاز! خطوة للأمام.' : scorePercent >= 50 ? '👍 كويس! راجع الأسئلة اللي غلطت فيها.' : '📖 راجع القاعدة وحاول مرة تانية.'}
               </p>
             </div>
 
-            {/* XP Earned */}
-            <div className="bg-blue-50 rounded-lg p-4 mb-6">
-              <div className="flex items-center justify-center gap-2">
-                <IoStar className="w-5 h-5 text-yellow-500" />
-                <span className="font-semibold text-blue-700">+{exerciseData.xp} XP Earned</span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={restartExercise}
-                className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-              >
-                <IoRefresh className="w-5 h-5" />
-                Try Again
+            <div className="flex flex-col gap-3">
+              <button onClick={handleRestart} className="w-full py-3 rounded-2xl font-bold text-white text-sm" style={{ background:'linear-gradient(135deg,#2563eb,#0ea5e9)', boxShadow:'0 8px 20px rgba(37,99,235,0.25)' }}>
+                كرر التمرين
               </button>
-              <Link
-                href="/practice"
-                className="flex items-center gap-2 border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors font-semibold"
-              >
-                Back to Practice
-              </Link>
-              <Link
-                href="/learn"
-                className="flex items-center gap-2 border border-green-600 text-green-600 px-6 py-3 rounded-lg hover:bg-green-50 transition-colors font-semibold"
-              >
-                Continue Learning
+              <Link href="/practice" className="w-full py-3 rounded-2xl font-bold text-slate-700 text-sm border-2 border-slate-200 bg-white text-center">
+                تمارين تانية
               </Link>
             </div>
           </div>
@@ -236,177 +273,115 @@ const ExercisePage = () => {
     )
   }
 
+  if (!question) return null
+
+  // ─── Question Screen ─────────────────────────────────────
+  const parts = question.highlightWord ? question.text.split(question.highlightWord) : [question.text]
+
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 pb-10">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <IoArrowBack className="w-5 h-5" />
-            Back
-          </button>
+    <div className="min-h-screen py-10"
+      style={{ background:'linear-gradient(160deg,#f8faff 0%,#eef4ff 40%,#f0faf8 100%)', fontFamily:"'Tajawal',sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');`}</style>
 
-          {/* Timer */}
-          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
-            <IoTime className="w-4 h-4 text-gray-600" />
-            <span className="font-mono font-semibold text-gray-900">{formatTime(timeLeft)}</span>
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 space-y-5">
+
+        {/* Top Bar */}
+        <div className="flex items-center justify-between">
+          <Link href="/practice" className="flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors">
+            <IoArrowForward className="w-4 h-4" /> {exercise.title}
+          </Link>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full border" style={{ background: ls.bg, color: ls.color, borderColor: ls.border }}>{exercise.level}</span>
+            <span className="text-xs text-slate-400 font-medium">{currentIdx + 1} / {exercise.questions.length}</span>
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">
-              Question {currentQuestion + 1} of {exerciseData.questions.length}
-            </span>
-            <span className="text-sm text-gray-600">
-              {Math.round(((currentQuestion) / exerciseData.questions.length) * 100)}%
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-3">
-            <div 
-              className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-              style={{ width: `${((currentQuestion) / exerciseData.questions.length) * 100}%` }}
-            ></div>
-          </div>
+        {/* Progress */}
+        <div className="h-1.5 rounded-full bg-slate-200">
+          <div className="h-1.5 rounded-full transition-all duration-500" style={{ width:`${progress}%`, background:'linear-gradient(90deg,#2563eb,#0ea5e9)' }} />
         </div>
 
-        {/* Exercise Card */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          
-          {/* Question Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">{exerciseData.title}</h1>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
-                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                  {exerciseData.level}
+        {/* Card */}
+        <div className="rounded-3xl overflow-hidden" style={{ background:'linear-gradient(135deg,#0f172a,#1e3a5f)', boxShadow:'0 20px 50px rgba(15,23,42,0.2)' }}>
+
+          {/* Cover image */}
+          <div className="relative" style={{ height:140 }}>
+            <img src={exercise.image} alt="" className="w-full h-full object-cover opacity-50" />
+            <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent, rgba(15,23,42,0.95))' }} />
+            <div className="absolute bottom-4 right-5 left-5 flex items-end justify-between">
+              <div className="flex items-center gap-2 text-white/60 text-xs">
+                <div className="w-2 h-2 rounded-full bg-red-400" /><div className="w-2 h-2 rounded-full bg-amber-400" /><div className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="mr-1">{exercise.subtitle}</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-white/60 flex items-center gap-1"><IoTime className="w-3 h-3" />{exercise.duration}</span>
+                <span className="text-amber-400 font-bold flex items-center gap-1"><IoFlame className="w-3 h-3" />{exercise.xp} XP</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Question */}
+          <div className="px-6 py-5">
+            <p className="text-slate-400 text-xs mb-3 font-medium">اختر الإجابة الصحيحة:</p>
+            <div className="rounded-2xl px-5 py-4 text-slate-100 text-base leading-8 font-medium" style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.08)' }} dir="ltr">
+              {parts.map((part, i) => (
+                <span key={i}>
+                  {part}
+                  {i < parts.length - 1 && question.highlightWord && (
+                    <span className="font-extrabold px-2 py-0.5 rounded mx-1" style={{ background:'rgba(14,165,233,0.25)', color:'#38bdf8', borderBottom:'2px solid #0ea5e9' }}>
+                      {answered ? question.options.find(o => o.id === selected)?.text : '___'}
+                    </span>
+                  )}
                 </span>
-                <span>•</span>
-                <span>{exerciseData.type}</span>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-600">XP</div>
-              <div className="font-semibold text-blue-600">+{exerciseData.xp}</div>
+              ))}
             </div>
           </div>
 
-          {/* Current Question */}
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              {currentQuestionData.question}
-            </h2>
+          {/* Options */}
+          <div className="px-6 pb-5 grid grid-cols-2 gap-2">
+            {question.options.map(opt => {
+              const isSelected = selected === opt.id
+              let style: React.CSSProperties = { background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', color:'#cbd5e1', cursor: answered ? 'default' : 'pointer' }
+              if (answered) {
+                if (opt.correct)       style = { ...style, background:'rgba(16,185,129,0.2)',  border:'1px solid #10b981', color:'#6ee7b7' }
+                else if (isSelected)   style = { ...style, background:'rgba(239,68,68,0.15)',  border:'1px solid #ef4444', color:'#fca5a5' }
+              } else if (isSelected)   style = { ...style, background:'rgba(37,99,235,0.25)',  border:'1px solid #3b82f6', color:'white'   }
 
-            {/* Audio Player */}
-            {currentQuestionData.audioUrl && (
-              <div className="mb-4">
-                <button
-                  onClick={() => playAudio(currentQuestionData.audioUrl!)}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              return (
+                <button key={opt.id} onClick={() => handleSelect(opt.id)}
+                  className="text-center rounded-xl px-4 py-3 font-bold text-sm flex items-center justify-center gap-2 transition-all duration-150"
+                  style={style}
                 >
-                  {isPlaying ? <IoPause className="w-4 h-4" /> : <IoPlay className="w-4 h-4" />}
-                  <IoVolumeHigh className="w-4 h-4" />
-                  {isPlaying ? 'Playing...' : 'Play Audio'}
+                  {opt.text}
+                  {answered && opt.correct             && <IoCheckmarkCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
+                  {answered && isSelected && !opt.correct && <IoCloseCircle    className="w-4 h-4 text-red-400    flex-shrink-0" />}
                 </button>
-              </div>
-            )}
-
-            {/* Image */}
-            {currentQuestionData.imageUrl && (
-              <div className="mb-4">
-                <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <span className="text-gray-500">Image: {currentQuestionData.question}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Transcript */}
-            {currentQuestionData.transcript && (
-              <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Transcript:</h4>
-                <p className="text-gray-700 italic">{currentQuestionData.transcript}</p>
-              </div>
-            )}
-
-            {/* Multiple Choice Options */}
-            {currentQuestionData.options && (
-              <div className="space-y-3">
-                {currentQuestionData.options.map((option, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleAnswer(option)}
-                    className="w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 font-medium text-sm">
-                        {String.fromCharCode(65 + index)}
-                      </div>
-                      <span>{option}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Speaking Exercise */}
-            {currentQuestionData.type === 'speaking' && (
-              <div className="space-y-4">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <h4 className="font-semibold text-blue-900 mb-2">💡 Tips:</h4>
-                  <ul className="text-blue-800 space-y-1">
-                    {currentQuestionData.tips?.map((tip, index) => (
-                      <li key={index}>• {tip}</li>
-                    ))}
-                  </ul>
-                </div>
-                <button
-                  onClick={() => handleAnswer(currentQuestionData.correctAnswer)}
-                  className="w-full bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 transition-colors font-semibold text-lg"
-                >
-                  I've Finished Speaking
-                </button>
-              </div>
-            )}
+              )
+            })}
           </div>
 
-          {/* Tips for all questions */}
-          {currentQuestionData.explanation && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h4 className="font-semibold text-yellow-900 mb-1">💡 Remember:</h4>
-              <p className="text-yellow-800 text-sm">{currentQuestionData.explanation}</p>
+          {/* Feedback */}
+          {answered && (
+            <div className="mx-6 mb-6 rounded-2xl px-5 py-4 text-sm leading-7" style={{ background: isCorrect ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.1)', border:`1px solid ${isCorrect ? '#10b981' : '#ef4444'}`, color: isCorrect ? '#6ee7b7' : '#fca5a5' }}>
+              <p className="font-bold">{isCorrect ? '🎉 إجابة صحيحة!' : '❌ إجابة خاطئة.'}</p>
+              <p className="mt-1 text-slate-400 text-xs">{question.explanation}</p>
             </div>
           )}
         </div>
 
-        {/* Navigation */}
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => setCurrentQuestion(prev => Math.max(0, prev - 1))}
-            disabled={currentQuestion === 0}
-            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
+        {/* Next */}
+        {answered && (
+          <button onClick={handleNext} className="w-full py-3.5 rounded-2xl font-bold text-white text-sm flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all" style={{ background:'linear-gradient(135deg,#2563eb,#0ea5e9)', boxShadow:'0 8px 24px rgba(37,99,235,0.25)' }}>
+            {currentIdx + 1 >= exercise.questions.length ? 'عرض النتيجة' : 'السؤال التالي'}
+            <IoArrowBack className="w-4 h-4" />
           </button>
-          
-          <div className="text-sm text-gray-600">
-            Click your answer to continue
-          </div>
+        )}
 
-          <button
-            onClick={() => handleAnswer('skip')}
-            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Skip
-          </button>
-        </div>
+        <Link href="/practice" className="flex items-center justify-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors py-2">
+          <IoArrowForward className="w-4 h-4" /> الرجوع للتمارين
+        </Link>
+
       </div>
     </div>
   )
 }
-
-export default ExercisePage

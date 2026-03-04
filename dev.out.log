@@ -1,0 +1,14 @@
+
+> my-english-app@0.1.0 dev
+> next dev --port 3003 --webpack
+
+   next-swc build: wasm build @next/swc-wasm-nodejs
+   ▲ Next.js 16.0.0 (webpack)
+   - Local:        http://localhost:3003
+   - Network:      http://192.168.1.151:3003
+   - Environments: .env.local
+
+ ✓ Starting...
+   Skipping creating a lockfile at E:\nextjs projects\my-english-app-done✅\.next\dev\lock because we're using WASM bindings
+   next-swc build: wasm build @next/swc-wasm-nodejs
+[?25h

@@ -1,234 +1,264 @@
-'use client'
-import React, { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+﻿'use client'
+import { useState } from 'react'
 import Link from 'next/link'
-import { IoArrowBack, IoSearch, IoCopy, IoDownload, IoPlay } from 'react-icons/io5'
+import { IoArrowBack, IoArrowForward, IoCheckmarkCircle, IoCloseCircle, IoBookOutline, IoFlame } from 'react-icons/io5'
 
-const TranscriptPage = () => {
-  const params = useParams()
-  const router = useRouter()
-  const videoId = params.id as string
+// ─── Data ─────────────────────────────────────────────────
+const transcriptsData: Record<string, {
+  title: string; level: string; thumbnail: string
+  transcript: { time: string; text: string; highlight?: string }[]
+  questions: { id: string; text: string; options: { id: string; text: string; correct: boolean }[]; explanation: string }[]
+}> = {
+  '1': {
+    title:'طلب في مطعم', level:'A1',
+    thumbnail:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80',
+    transcript:[
+      { time:'0:05', text:"Waiter: Good evening! Are you ready to order?", highlight:'ready to order' },
+      { time:'0:10', text:"Customer: Yes, I'd like the grilled chicken, please.", highlight:"I'd like" },
+      { time:'0:15', text:"Waiter: Excellent choice! Anything to drink?", highlight:'Anything to drink' },
+      { time:'0:20', text:"Customer: Just water, thank you.", highlight:'Just water' },
+      { time:'0:30', text:"Customer: Can I have the bill, please?", highlight:'Can I have the bill' },
+      { time:'0:35', text:"Waiter: Of course! Here you go.", highlight:'Here you go' },
+    ],
+    questions:[
+      {
+        id:'q1', text:'ماذا طلب الزبون للشرب؟',
+        explanation:'قال الزبون "Just water" — فقط ماء.',
+        options:[
+          { id:'a', text:'عصير',         correct:false },
+          { id:'b', text:'ماء فقط',      correct:true  },
+          { id:'c', text:'قهوة',         correct:false },
+          { id:'d', text:'لم يطلب شيئاً', correct:false },
+        ]
+      },
+      {
+        id:'q2', text:'ما معنى "Can I have the bill"؟',
+        explanation:'"Can I have the bill" = هل يمكنني الحصول على الفاتورة؟',
+        options:[
+          { id:'a', text:'هل يمكنني الطلب مرة أخرى؟', correct:false },
+          { id:'b', text:'هل الطعام جيد؟',              correct:false },
+          { id:'c', text:'هل يمكنني الحصول على الفاتورة؟', correct:true },
+          { id:'d', text:'هل يمكنني تغيير الطلب؟',     correct:false },
+        ]
+      },
+      {
+        id:'q3', text:'كيف قال الزبون أنه يريد الدجاج؟',
+        explanation:"I'd like = أود / أريد — هذه الصيغة أكثر أدباً من I want.",
+        options:[
+          { id:'a', text:'I want chicken',          correct:false },
+          { id:'b', text:"I'd like the grilled chicken", correct:true },
+          { id:'c', text:'Give me chicken',          correct:false },
+          { id:'d', text:'Chicken please',           correct:false },
+        ]
+      },
+    ]
+  },
+  '2': {
+    title:'التقديم لوظيفة', level:'B1',
+    thumbnail:'https://images.unsplash.com/photo-1565688534245-05d6b5be184a?w=800&q=80',
+    transcript:[
+      { time:'0:10', text:"Interviewer: Tell me about yourself.", highlight:'Tell me about yourself' },
+      { time:'0:20', text:"Candidate: I have five years of experience in marketing.", highlight:'years of experience' },
+      { time:'0:30', text:"Interviewer: What are your strengths?", highlight:'strengths' },
+      { time:'0:40', text:"Candidate: I'm a team player and I'm very organized.", highlight:'team player' },
+      { time:'0:55', text:"Interviewer: Where do you see yourself in five years?", highlight:'five years' },
+      { time:'1:05', text:"Candidate: I hope to grow with this company.", highlight:'grow with' },
+    ],
+    questions:[
+      {
+        id:'q1', text:'كم سنة خبرة لدى المتقدم؟',
+        explanation:'قال "I have five years of experience" = لدي خمس سنوات خبرة.',
+        options:[
+          { id:'a', text:'سنتان',    correct:false },
+          { id:'b', text:'ثلاث سنوات', correct:false },
+          { id:'c', text:'خمس سنوات', correct:true  },
+          { id:'d', text:'عشر سنوات', correct:false },
+        ]
+      },
+      {
+        id:'q2', text:'ما معنى "team player"؟',
+        explanation:'"team player" = شخص يعمل بروح الفريق ويتعاون مع الآخرين.',
+        options:[
+          { id:'a', text:'لاعب كرة قدم',             correct:false },
+          { id:'b', text:'شخص يعمل بمفرده',           correct:false },
+          { id:'c', text:'شخص يعمل بروح الفريق',       correct:true  },
+          { id:'d', text:'شخص يحب الألعاب',           correct:false },
+        ]
+      },
+    ]
+  },
+}
 
-  const [searchTerm, setSearchTerm] = useState('')
-  const [copiedLine, setCopiedLine] = useState<number | null>(null)
+const defaultTranscript = transcriptsData['1']
 
-  // بيانات الفيديو والـ Transcript
-  const videoData = {
-    id: videoId,
-    title: 'Present Perfect Tense - Complete Guide',
-    instructor: 'Sarah Johnson',
-    duration: '15:30'
-  }
+function getLevelStyle(level: string) {
+  if (level === 'A1') return { bg:'#dcfce7', color:'#15803d', border:'#bbf7d0' }
+  if (level === 'A2') return { bg:'#d1fae5', color:'#065f46', border:'#a7f3d0' }
+  if (level === 'B1') return { bg:'#dbeafe', color:'#1d4ed8', border:'#bfdbfe' }
+  if (level === 'B2') return { bg:'#ede9fe', color:'#6d28d9', border:'#ddd6fe' }
+  return { bg:'#fce7f3', color:'#9d174d', border:'#fbcfe8' }
+}
 
-  // Transcript كامل
-  const fullTranscript = [
-    { time: '0:00', text: 'Welcome to this lesson on the present perfect tense.' },
-    { time: '0:15', text: 'Today we will learn when and how to use this important tense in English.' },
-    { time: '0:30', text: 'The present perfect is one of the most commonly used tenses, and understanding it will greatly improve your English.' },
-    { time: '1:00', text: "Let's start with the basic structure. The present perfect is formed with have or has plus the past participle of the main verb." },
-    { time: '1:30', text: "For example: 'I have visited Paris,' 'She has finished her work,' 'We have seen that movie.'" },
-    { time: '2:15', text: "Now, when do we use the present perfect? There are three main situations." },
-    { time: '2:30', text: "First, we use it for experiences in our lives when we don't specify exactly when they happened." },
-    { time: '3:00', text: "For example: 'I have been to Japan.' This means at some point in my life, I visited Japan." },
-    { time: '3:30', text: "Second, we use it for actions that started in the past and continue to the present." },
-    { time: '4:00', text: "For example: 'I have lived in London for five years.' This means I started living there five years ago and I still live there now." },
-    { time: '4:45', text: "Third, we use it for recent actions that have a result in the present." },
-    { time: '5:15', text: "For example: 'I have lost my keys.' This means I lost them recently and now I can't find them." },
-    { time: '6:00', text: "Let's practice with some more examples to make sure you understand." },
-    { time: '6:30', text: "Look at this sentence: 'They have known each other since childhood.' What situation does this represent?" },
-    { time: '7:15', text: "That's right! It's situation number two - an action that started in the past and continues to now." },
-    { time: '8:00', text: "Now, let's talk about the difference between present perfect and simple past." },
-    { time: '8:30', text: "This is where many students get confused, so pay close attention." },
-    { time: '9:00', text: "We use simple past for finished actions in the past when we know exactly when they happened." },
-    { time: '9:30', text: "For example: 'I visited Paris last year.' Here we specify 'last year,' so we use simple past." },
-    { time: '10:15', text: "But if we say 'I have visited Paris,' we don't say when - we're just talking about the experience." },
-    { time: '11:00', text: "Let's do a quick quiz. Complete this sentence: 'She _____ never _____ (see) snow.'" },
-    { time: '11:45', text: "The correct answer is: 'She has never seen snow.' Good job if you got it right!" },
-    { time: '12:30', text: "Now, let's look at some common time expressions used with present perfect." },
-    { time: '13:00', text: "We often use words like: ever, never, already, yet, just, for, and since." },
-    { time: '13:45', text: "For example: 'Have you ever been to New York?' 'I haven't finished my homework yet.'" },
-    { time: '14:30', text: "Remember: 'for' is used with a period of time, while 'since' is used with a specific point in time." },
-    { time: '15:00', text: "That's all for this lesson. Practice using the present perfect in your daily conversations!" },
-    { time: '15:30', text: "Thank you for watching, and I'll see you in the next lesson!" }
-  ]
+export default function TranscriptPage({ params }: { params: { id: string } }) {
+  const data = transcriptsData[params.id] ?? defaultTranscript
+  const ls = getLevelStyle(data.level)
 
-  const copyToClipboard = async (text: string, lineIndex: number) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedLine(lineIndex)
-      setTimeout(() => setCopiedLine(null), 2000)
-    } catch (err) {
-      console.error('Failed to copy text: ', err)
-    }
-  }
+  const [answers,  setAnswers]  = useState<Record<string, string>>({})
+  const [submitted, setSubmitted] = useState(false)
 
-  const downloadTranscript = () => {
-    const transcriptText = fullTranscript.map(line => `${line.time} - ${line.text}`).join('\n\n')
-    const blob = new Blob([transcriptText], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `transcript-${videoData.title}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
+  const score = submitted
+    ? data.questions.filter(q => data.questions.find(dq => dq.id === q.id)?.options.find(o => o.id === answers[q.id])?.correct).length
+    : 0
+  const scorePercent = submitted ? Math.round((score / data.questions.length) * 100) : 0
 
-  const filteredTranscript = fullTranscript.filter(line =>
-    line.text.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  const jumpToTime = (time: string) => {
-    // في الواقع بتكون بتشغل الفيديو من الوقت المحدد
-    router.push(`/videos/play/${videoId}?t=${time}`)
+  function handleSelect(qId: string, oId: string) {
+    if (submitted) return
+    setAnswers(prev => ({ ...prev, [qId]: oId }))
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 pb-10">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
-            >
-              <IoArrowBack className="w-5 h-5" />
-              Back to Video
-            </button>
-            <h1 className="text-3xl font-bold text-gray-900">Transcript</h1>
-            <p className="text-gray-600 mt-2">
-              {videoData.title} • {videoData.instructor} • {videoData.duration}
-            </p>
-          </div>
+    <div className="min-h-screen py-10"
+      style={{ background:'linear-gradient(160deg,#f8faff 0%,#eef4ff 40%,#f0faf8 100%)', fontFamily:"'Tajawal',sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');`}</style>
 
-          <div className="flex gap-3">
-            <button
-              onClick={downloadTranscript}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <IoDownload className="w-4 h-4" />
-              Download
-            </button>
-            <Link
-              href={`/videos/play/${videoId}`}
-              className="flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <IoPlay className="w-4 h-4" />
-              Watch Video
-            </Link>
-          </div>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-6">
+
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm text-slate-400">
+          <Link href="/videos" className="hover:text-blue-600 font-bold transition-colors flex items-center gap-1">
+            <IoArrowForward className="w-4 h-4" /> الفيديوهات
+          </Link>
+          <span>/</span>
+          <Link href={`/videos/play/${params.id}`} className="hover:text-blue-600 transition-colors">{data.title}</Link>
+          <span>/</span>
+          <span className="text-slate-600">النص والاختبار</span>
         </div>
 
-        {/* Search Bar */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <IoSearch className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search in transcript..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            />
-          </div>
-          {searchTerm && (
-            <div className="mt-2 text-sm text-gray-600">
-              Found {filteredTranscript.length} line{filteredTranscript.length !== 1 ? 's' : ''} matching "{searchTerm}"
-            </div>
-          )}
-        </div>
-
-        {/* Transcript Content */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="p-6">
-            <div className="space-y-6">
-              {filteredTranscript.map((line, index) => (
-                <div
-                  key={index}
-                  className="flex gap-4 group hover:bg-gray-50 p-3 rounded-lg transition-colors"
-                >
-                  {/* Time Stamp */}
-                  <button
-                    onClick={() => jumpToTime(line.time)}
-                    className="flex-shrink-0 text-blue-600 hover:text-blue-700 font-mono text-sm bg-blue-50 px-2 py-1 rounded group-hover:bg-blue-100 transition-colors"
-                  >
-                    {line.time}
-                  </button>
-
-                  {/* Transcript Text */}
-                  <div className="flex-1">
-                    <p className="text-gray-800 leading-relaxed">{line.text}</p>
-                  </div>
-
-                  {/* Copy Button */}
-                  <button
-                    onClick={() => copyToClipboard(line.text, index)}
-                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-400 hover:text-gray-600"
-                    title="Copy text"
-                  >
-                    {copiedLine === index ? (
-                      <span className="text-green-600 text-sm">Copied!</span>
-                    ) : (
-                      <IoCopy className="w-4 h-4" />
-                    )}
-                  </button>
+        {/* ─── Transcript ─── */}
+        <div className="bg-white rounded-3xl overflow-hidden" style={{ border:'1.5px solid #e2e8f0', boxShadow:'0 8px 24px rgba(15,23,42,0.06)' }}>
+          {/* Header image */}
+          <div className="relative" style={{ height:120 }}>
+            <img src={data.thumbnail} alt={data.title} className="w-full h-full object-cover opacity-50" />
+            <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(15,23,42,0.4), rgba(15,23,42,0.8))' }} />
+            <div className="absolute inset-0 flex items-center px-6">
+              <div className="text-right">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full border" style={{ background: ls.bg, color: ls.color, borderColor: ls.border }}>{data.level}</span>
+                  <span className="text-white/60 text-xs"><IoBookOutline className="w-3 h-3 inline mr-1" />نص الفيديو</span>
                 </div>
-              ))}
-            </div>
-
-            {/* No Results */}
-            {filteredTranscript.length === 0 && searchTerm && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <IoSearch className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No results found</h3>
-                <p className="text-gray-600">Try different search terms</p>
+                <h1 className="font-extrabold text-white text-xl">{data.title}</h1>
               </div>
-            )}
+            </div>
           </div>
-        </div>
 
-        {/* Vocabulary Highlights */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Vocabulary from this Lesson</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { word: 'present perfect', meaning: 'زمن المضارع التام' },
-              { word: 'past participle', meaning: 'التصريف الثالث' },
-              { word: 'experiences', meaning: 'الخبرات' },
-              { word: 'unfinished time', meaning: 'زمن غير محدد' },
-              { word: 'time expressions', meaning: 'عبارات الوقت' },
-              { word: 'structure', meaning: 'التركيب' },
-              { word: 'commonly used', meaning: 'شائع الاستخدام' },
-              { word: 'practice', meaning: 'الممارسة' }
-            ].map((vocab, index) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 transition-colors">
-                <div className="font-medium text-gray-900 text-sm">{vocab.word}</div>
-                <div className="text-gray-600 text-xs mt-1">{vocab.meaning}</div>
+          {/* Transcript lines */}
+          <div className="p-6 space-y-3" dir="ltr">
+            {data.transcript.map((line, i) => (
+              <div key={i} className="flex gap-3 items-start">
+                <span className="text-xs text-slate-400 font-mono mt-1 flex-shrink-0 w-10">{line.time}</span>
+                <p className="text-slate-700 text-sm leading-7">
+                  {line.highlight
+                    ? line.text.split(line.highlight).map((part, j, arr) => (
+                        <span key={j}>{part}{j < arr.length-1 && (
+                          <span className="font-bold px-1 rounded" style={{ background:'rgba(37,99,235,0.1)', color:'#2563eb' }}>{line.highlight}</span>
+                        )}</span>
+                      ))
+                    : line.text
+                  }
+                </p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Study Tips */}
-        <div className="bg-blue-50 rounded-lg p-6 mt-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-3">💡 Study Tips</h3>
-          <ul className="space-y-2 text-blue-800">
-            <li>• Read the transcript while watching the video to improve listening comprehension</li>
-            <li>• Practice speaking by reading the transcript out loud</li>
-            <li>• Use the vocabulary list to learn new words from this lesson</li>
-            <li>• Copy sentences to practice writing and grammar</li>
-          </ul>
+        {/* ─── Questions ─── */}
+        <div className="rounded-3xl overflow-hidden" style={{ background:'linear-gradient(135deg,#0f172a,#1e3a5f)', boxShadow:'0 20px 50px rgba(15,23,42,0.2)' }}>
+          <div className="px-6 pt-6 pb-2 flex items-center justify-between">
+            <span className="text-slate-400 text-sm">{data.questions.length} أسئلة</span>
+            <h2 className="font-extrabold text-white text-lg">اختبار الفهم</h2>
+          </div>
+
+          <div className="px-6 pb-6 space-y-5 mt-4">
+            {data.questions.map((q, qi) => {
+              const selectedId = answers[q.id]
+              const isAnswered = !!selectedId
+              const selectedCorrect = q.options.find(o => o.id === selectedId)?.correct
+
+              return (
+                <div key={q.id} className="rounded-2xl overflow-hidden" style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)' }}>
+                  <div className="px-5 py-4 border-b border-white/5">
+                    <p className="text-white font-bold text-sm text-right">
+                      <span className="text-slate-500 ml-2">{qi+1}.</span> {q.text}
+                    </p>
+                  </div>
+                  <div className="p-4 grid grid-cols-1 gap-2">
+                    {q.options.map(opt => {
+                      const isSelected = selectedId === opt.id
+                      let style: React.CSSProperties = { background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', color:'#cbd5e1', cursor: submitted ? 'default':'pointer' }
+                      if (submitted) {
+                        if (opt.correct)       style = { ...style, background:'rgba(16,185,129,0.2)',  border:'1px solid #10b981', color:'#6ee7b7' }
+                        else if (isSelected)   style = { ...style, background:'rgba(239,68,68,0.15)',  border:'1px solid #ef4444', color:'#fca5a5' }
+                      } else if (isSelected)   style = { ...style, background:'rgba(37,99,235,0.25)',  border:'1px solid #3b82f6', color:'white'   }
+
+                      return (
+                        <button key={opt.id} onClick={() => handleSelect(q.id, opt.id)}
+                          className="text-right rounded-xl px-4 py-2.5 font-bold text-xs flex items-center justify-between transition-all duration-150"
+                          style={style}
+                        >
+                          <span>{opt.text}</span>
+                          {submitted && opt.correct             && <IoCheckmarkCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />}
+                          {submitted && isSelected && !opt.correct && <IoCloseCircle    className="w-4 h-4 text-red-400    flex-shrink-0" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {submitted && (
+                    <div className="mx-4 mb-4 rounded-xl px-4 py-3 text-xs" style={{ background: selectedCorrect ? 'rgba(16,185,129,0.1)':'rgba(239,68,68,0.08)', border:`1px solid ${selectedCorrect ? '#10b981':'#ef4444'}`, color: selectedCorrect ? '#6ee7b7':'#fca5a5' }}>
+                      {selectedCorrect ? '🎉 ' : '❌ '}{q.explanation}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Submit / Score */}
+          <div className="px-6 pb-6">
+            {!submitted ? (
+              <button
+                onClick={() => setSubmitted(true)}
+                disabled={Object.keys(answers).length < data.questions.length}
+                className="w-full py-3.5 rounded-2xl font-bold text-white text-sm transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background:'linear-gradient(135deg,#2563eb,#0ea5e9)', boxShadow:'0 8px 24px rgba(37,99,235,0.25)' }}
+              >
+                تحقق من الإجابات ({Object.keys(answers).length}/{data.questions.length})
+              </button>
+            ) : (
+              <div className="rounded-2xl p-5 text-center" style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)' }}>
+                <div className="text-3xl mb-2">{scorePercent >= 80 ? '🏆' : scorePercent >= 50 ? '💪' : '📖'}</div>
+                <div className="font-extrabold text-2xl text-white mb-1">{score}/{data.questions.length}</div>
+                <div className="text-slate-400 text-sm mb-3">{scorePercent}% إجابات صحيحة</div>
+                <div className="flex items-center justify-center gap-1 text-amber-400 text-sm font-bold mb-4">
+                  <IoFlame className="w-4 h-4" /> +{Math.round(scorePercent / 10) * 5} XP مكتسبة
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => { setAnswers({}); setSubmitted(false) }} className="flex-1 py-2.5 rounded-xl font-bold text-sm border border-white/20 text-slate-300">
+                    حاول مرة تانية
+                  </button>
+                  <Link href="/videos" className="flex-1 py-2.5 rounded-xl font-bold text-white text-sm text-center" style={{ background:'linear-gradient(135deg,#2563eb,#0ea5e9)' }}>
+                    فيديوهات تانية
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+
+        <Link href={`/videos/play/${params.id}`} className="flex items-center justify-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors py-2">
+          <IoArrowBack className="w-4 h-4" /> الرجوع للفيديو
+        </Link>
+
       </div>
     </div>
   )
 }
-
-export default TranscriptPage
