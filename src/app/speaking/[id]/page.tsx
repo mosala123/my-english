@@ -32,10 +32,10 @@ export default function ExercisePage() {
   const audioChunks = useRef<Blob[]>([])
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const animationFrame = useRef<number>()
+  const animationFrame = useRef<number | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
-  const timerRef = useRef<NodeJS.Timeout>()
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // تلميحات متحركة
   const tips = task?.tips || []
@@ -135,7 +135,9 @@ export default function ExercisePage() {
     if (mediaRecorder.current && isRecording) {
       mediaRecorder.current.stop()
       setIsRecording(false)
-      clearInterval(timerRef.current)
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop())
       }

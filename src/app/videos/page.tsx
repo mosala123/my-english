@@ -228,7 +228,7 @@ export default function VideosPage() {
 
                     {/* Level badge */}
                     <div className="absolute top-3 right-3">
-                      <span className="text-xs font-bold px-2.5 py-1 rounded-full border" style={{ background: ls.bg, color: ls.color, borderColor: ls.border }}>
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full border" style={{ background: ls.bg, color: ls.text, borderColor: ls.border }}>
                         {video.level}
                       </span>
                     </div>
